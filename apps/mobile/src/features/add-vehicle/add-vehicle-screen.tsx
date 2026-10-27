@@ -116,6 +116,7 @@ export function AddVehicleScreen() {
       contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
+      automaticallyAdjustKeyboardInsets
       contentContainerStyle={styles.content}
     >
       {step.name === 'vin' ? (

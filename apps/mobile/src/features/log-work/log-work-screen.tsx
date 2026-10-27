@@ -104,6 +104,7 @@ export function LogWorkScreen({ vehicleId }: { vehicleId: string }) {
         style={styles.sheet}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={contentStyle}
         scrollIndicatorInsets={indicatorInsets}
       >
