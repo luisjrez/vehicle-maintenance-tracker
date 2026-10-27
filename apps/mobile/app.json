@@ -11,7 +11,11 @@
       "supportsTablet": false,
       "bundleIdentifier": "dev.luisjrez.maintenancetracker",
       "infoPlist": {
-        "NSCameraUsageDescription": "The camera reads VINs, odometers and transfer codes. Nothing is recorded or uploaded."
+        "NSCameraUsageDescription": "The camera reads VINs, odometers and transfer codes. Nothing is recorded or uploaded.",
+        "NSLocalNetworkUsageDescription": "Maintenance Tracker connects to its server on your local network.",
+        "EXDevMenuShowsAtLaunch": false,
+        "EXDevMenuIsOnboardingFinished": true,
+        "EXDevMenuShowFloatingActionButton": false
       }
     },
     "android": {
