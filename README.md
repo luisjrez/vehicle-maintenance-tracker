@@ -144,9 +144,9 @@ xcrun devicectl device install app --device <identifier> \
 
 | What | Command | Count |
 |---|---|---|
-| Shared rules (Vitest) | `bun run --filter @vmt/shared test` | 125 |
+| Shared rules (Vitest) | `bun run --filter @vmt/shared test` | 132 |
 | API unit (Vitest) | `bun run --filter @vmt/api test` | 21 |
-| App components (jest-expo + Testing Library) | `bun run --filter @vmt/mobile test` | 89 |
+| App components (jest-expo + Testing Library) | `bun run --filter @vmt/mobile test` | 91 |
 | API integration against a real Postgres | see below | 54 |
 | End-to-end on the iOS simulator (Maestro) | see below | 7 flows |
 

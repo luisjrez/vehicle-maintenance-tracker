@@ -9,7 +9,7 @@ v1 targets US-market vehicles. NHTSA vPIC is free and keyless but always returns
 ## Decision
 
 - VIN is optional; manual make/model/year entry is always available.
-- A provided VIN is normalized (trim, strip spaces/dashes, uppercase) and validated strictly — 17 chars, no I/O/Q, valid model-year code, matching check digit — by a validator in `packages/shared`, used by the app (instant feedback) and the API (authoritative). Invalid → rejected, "Add without VIN" offered.
+- A provided VIN is normalized (trim, strip spaces/dashes, uppercase) and validated strictly — 17 chars, no I/O/Q, valid model-year code, numeric serial (positions 14–17, or 15–17 for small manufacturers), matching check digit — by a validator in `packages/shared`, used by the app (instant feedback) and the API (authoritative). Invalid → rejected, "Add without VIN" offered.
 - VIN capture: typing/pasting or camera scan via native OCR; OCR text goes through the same validator.
 - Decoding goes through our API, which proxies vPIC and keeps a shared per-VIN cache. The app persists vehicle data in MMKV and refreshes it from our API at most once a day.
 - Decoded fields are copied onto the vehicle and are editable before and after saving; nothing re-decodes over Owner edits.

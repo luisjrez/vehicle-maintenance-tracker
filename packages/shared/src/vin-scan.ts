@@ -1,6 +1,6 @@
 // Turning camera reads into a VIN (ADR-0006, VIN scanning decisions). Every
 // candidate still passes the strict validator; the Owner confirms the result.
-import { normalizeVin, VIN_ALPHABET, VIN_LENGTH, validateVin } from './vin.js';
+import { modelYearCandidates, normalizeVin, VIN_ALPHABET, VIN_LENGTH, validateVin } from './vin.js';
 
 /** Characters OCR confuses with each other; a swap is kept only if the check digit then passes. */
 const AMBIGUOUS: Readonly<Record<string, string>> = { S: '5', '5': 'S', B: '8', '8': 'B', Z: '2', '2': 'Z', G: '6', '6': 'G', D: '0', '0': 'D' };
@@ -30,11 +30,20 @@ export function vinReadingsFromText(text: string): string[] {
 }
 
 /**
+ * A camera read must also encode a model year that has happened. Typed VINs
+ * skip this: position 7 only marks the 2010+ cycle on light vehicles, so a
+ * heavy truck could look like a future car, but OCR noise is far more common.
+ */
+function isPlausibleRead(vin: string, currentYear: number): boolean {
+  return validateVin(vin).ok && modelYearCandidates(vin, currentYear).length > 0;
+}
+
+/**
  * Valid VINs a raw 17-character read could be. I/O/Q never occur in a VIN, so
  * they become 1/0/0; positions 13–17 are digits; S/5, B/8, Z/2, G/6, D/0 swaps
  * are only kept when the check digit confirms them.
  */
-export function correctVinReading(raw: string): string[] {
+export function correctVinReading(raw: string, currentYear: number): string[] {
   const upper = raw.toUpperCase();
   if (upper.length !== VIN_LENGTH) return [];
   const characters = upper.replace(/I/g, '1').replace(/[OQ]/g, '0').split('');
@@ -44,14 +53,14 @@ export function correctVinReading(raw: string): string[] {
   }
   const base = characters.join('');
   if (!VIN_ALPHABET.test(base)) return [];
-  if (validateVin(base).ok) return [base];
+  if (isPlausibleRead(base, currentYear)) return [base];
 
   const rescued = new Set<string>();
   for (let index = 0; index < SERIAL_START; index += 1) {
     const swap = AMBIGUOUS[base.charAt(index)];
     if (swap === undefined) continue;
     const candidate = `${base.slice(0, index)}${swap}${base.slice(index + 1)}`;
-    if (validateVin(candidate).ok) rescued.add(candidate);
+    if (isPlausibleRead(candidate, currentYear)) rescued.add(candidate);
   }
   return [...rescued];
 }

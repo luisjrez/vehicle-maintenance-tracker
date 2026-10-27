@@ -1,6 +1,7 @@
 import { addVinReading, correctVinReading, emptyVinVote, normalizeBarcodeVin, vinConsensus, vinReadingsFromText } from './vin-scan.js';
 
 const VIN = '1HGCM82633A004352';
+const YEAR = 2026;
 
 describe('normalizeBarcodeVin', () => {
   it('strips the leading "I" some door-jamb barcodes carry', () => {
@@ -30,26 +31,38 @@ describe('vinReadingsFromText', () => {
 
 describe('correctVinReading', () => {
   it('keeps a reading that already passes the check digit', () => {
-    expect(correctVinReading(VIN)).toEqual([VIN]);
+    expect(correctVinReading(VIN, YEAR)).toEqual([VIN]);
   });
 
   it('maps I to 1 and O/Q to 0, which never appear in a VIN', () => {
-    expect(correctVinReading('IHGCM82633AOO4352')).toEqual([VIN]);
-    expect(correctVinReading('1HGCM82633A0Q4352')).toEqual([VIN]);
+    expect(correctVinReading('IHGCM82633AOO4352', YEAR)).toEqual([VIN]);
+    expect(correctVinReading('1HGCM82633A0Q4352', YEAR)).toEqual([VIN]);
   });
 
   it('forces digits in positions 13–17', () => {
-    expect(correctVinReading('1HGCM82633A00435Z')).toEqual([VIN]);
-    expect(correctVinReading('1HGCM82633A0O43S2')).toEqual([VIN]);
+    expect(correctVinReading('1HGCM82633A00435Z', YEAR)).toEqual([VIN]);
+    expect(correctVinReading('1HGCM82633A0O43S2', YEAR)).toEqual([VIN]);
   });
 
   it('tries ambiguous S/5, B/8, Z/2, G/6, D/0 swaps only when the check digit confirms them', () => {
-    expect(correctVinReading('1HGCMB2633A004352')).toEqual([VIN]);
-    expect(correctVinReading('1HGCM8Z633A004352')).toEqual([VIN]);
+    expect(correctVinReading('1HGCMB2633A004352', YEAR)).toEqual([VIN]);
+    expect(correctVinReading('1HGCM8Z633A004352', YEAR)).toEqual([VIN]);
   });
 
   it('gives up on a reading the check digit cannot rescue', () => {
-    expect(correctVinReading('1HGCM82633A004359')).toEqual([]);
+    expect(correctVinReading('1HGCM82633A004359', YEAR)).toEqual([]);
+  });
+
+  it('drops a reading whose model year has not happened yet', () => {
+    // Letter in position 7 + "2" in position 10 = model year 2032.
+    expect(correctVinReading('5YJ3E1EA22F317000', YEAR)).toEqual([]);
+    expect(correctVinReading('5YJ3E1EA22F317000', 2031)).toEqual(['5YJ3E1EA22F317000']);
+  });
+
+  it('finds no VIN in a windshield glass stamp', () => {
+    const readings = vinReadingsFromText('LAMINATED DOT825 AS1 M850');
+
+    expect(readings.flatMap((reading) => correctVinReading(reading, YEAR))).toEqual([]);
   });
 });
 

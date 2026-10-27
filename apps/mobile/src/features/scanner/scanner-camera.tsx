@@ -2,7 +2,7 @@
 // it with a JS mock (see jest.setup.ts), and a custom native module could
 // replace it without changing the scanner screen.
 import { type RefObject, useCallback, useImperativeHandle } from 'react';
-import { Linking, StyleSheet } from 'react-native';
+import { Linking, Platform, StyleSheet } from 'react-native';
 import {
   Camera,
   CommonResolutions,
@@ -15,6 +15,7 @@ import {
   type BarcodeFormat,
   processImageBarcodeScanning,
   processImageTextRecognition,
+  type TextRecognitionOptions,
   type TextRecognitionResult,
   useBarcodeScanning,
   useTextRecognition,
@@ -25,6 +26,27 @@ import type { ScanFrame, ScanMode, ScannedBarcode, ScannedTextLine } from '@/sha
 // Door-jamb stickers use Code 39 / Code 128 / Data Matrix; transfer codes are QR.
 const VIN_FORMATS: BarcodeFormat[] = ['CODE_39', 'CODE_128', 'DATA_MATRIX'];
 const QR_FORMATS: BarcodeFormat[] = ['QR_CODE'];
+// The plugin memoizes its native recognizer on the options object's identity,
+// so options live at module level: an inline literal builds one per render.
+const VIN_BARCODES = { formats: VIN_FORMATS };
+const QR_BARCODES = { formats: QR_FORMATS };
+const ODOMETER_TEXT: TextRecognitionOptions = { language: 'LATIN' };
+/**
+ * VIN mode reads only a band around the guide box (~8 % of the screen height,
+ * centred), so text elsewhere on the windshield — like the glass maker's
+ * "DOT… AS1 M…" stamp — never reaches the parser. iOS crops the sensor's
+ * landscape buffer before rotating, where the screen's vertical axis is x;
+ * Android rotates first, so it is y. The band is centred, so the direction of
+ * the rotation does not matter.
+ */
+const VIN_BAND = { start: 0.4, size: 0.2 };
+const VIN_TEXT: TextRecognitionOptions = {
+  language: 'LATIN',
+  roi:
+    Platform.OS === 'ios'
+      ? { x: VIN_BAND.start, y: 0, width: VIN_BAND.size, height: 1 }
+      : { x: 0, y: VIN_BAND.start, width: 1, height: VIN_BAND.size },
+};
 
 export type ScannerPermission = {
   granted: boolean;
@@ -69,8 +91,8 @@ export function useBackCameraAvailable(): boolean {
 
 export function ScannerCamera({ mode, torch, active, onScanFrame, captureRef }: Props) {
   const device = useCameraDevice('back');
-  const { barcodeScanning } = useBarcodeScanning({ formats: mode === 'qr' ? QR_FORMATS : VIN_FORMATS });
-  const { textRecognition } = useTextRecognition({ language: 'LATIN' });
+  const { barcodeScanning } = useBarcodeScanning(mode === 'qr' ? QR_BARCODES : VIN_BARCODES);
+  const { textRecognition } = useTextRecognition(mode === 'vin' ? VIN_TEXT : ODOMETER_TEXT);
   const wantsBarcodes = mode !== 'odometer';
   const wantsText = mode !== 'qr';
   const photoOutput = usePhotoOutput({ qualityPrioritization: 'speed' });

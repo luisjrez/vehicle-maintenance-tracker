@@ -13,7 +13,7 @@ import {
   vinReadingsFromText,
   type VinVote,
 } from '@vmt/shared';
-import type { ScanContext, ScanFrame } from '@/shared/scanner/scan-types';
+import type { ScanContext, ScanFrame, ScannedTextLine } from '@/shared/scanner/scan-types';
 
 /** What the scanner can propose to the Owner. */
 export type ScanProposal =
@@ -22,10 +22,31 @@ export type ScanProposal =
   | { kind: 'km'; km: number }
   | { kind: 'choice'; options: number[] };
 
+const centerY = (line: ScannedTextLine) => line.top + line.height / 2;
+
+/**
+ * Lines ML Kit split out of one printed row, joined left to right. Lines on
+ * different rows are never joined: splicing a glass stamp's "LAMINATED" onto
+ * "DOT825 AS1 M850" once produced a VIN that passed the check digit.
+ */
+function rowTexts(lines: readonly ScannedTextLine[]): string[] {
+  const rows: ScannedTextLine[][] = [];
+  for (const line of [...lines].sort((a, b) => centerY(a) - centerY(b))) {
+    const row = rows.at(-1);
+    const anchor = row?.[0];
+    if (row !== undefined && anchor !== undefined && Math.abs(centerY(line) - centerY(anchor)) < Math.min(line.height, anchor.height) / 2) {
+      row.push(line);
+    } else {
+      rows.push([line]);
+    }
+  }
+  return rows.filter((row) => row.length > 1).map((row) => [...row].sort((a, b) => a.left - b.left).map((line) => line.text).join(' '));
+}
+
 /** Corrected VIN readings in a frame's text, most likely first. */
-function vinReadings(frame: ScanFrame): string[] {
-  const texts = [...frame.lines.map((line) => line.text), frame.lines.map((line) => line.text).join(' ')];
-  return [...new Set(texts.flatMap(vinReadingsFromText).flatMap(correctVinReading))];
+function vinReadings(frame: ScanFrame, currentYear: number): string[] {
+  const texts = [...frame.lines.map((line) => line.text), ...rowTexts(frame.lines)];
+  return [...new Set(texts.flatMap(vinReadingsFromText).flatMap((reading) => correctVinReading(reading, currentYear)))];
 }
 
 /** The door-jamb barcode wins outright when it carries a valid VIN. */
@@ -40,11 +61,15 @@ function barcodeVin(frame: ScanFrame): string | null {
 export type VinScanState = { vote: VinVote };
 export const initialVinScan = (): VinScanState => ({ vote: emptyVinVote() });
 
-export function interpretVinFrame(state: VinScanState, frame: ScanFrame): { state: VinScanState; proposal: ScanProposal | null } {
+export function interpretVinFrame(
+  state: VinScanState,
+  frame: ScanFrame,
+  currentYear: number,
+): { state: VinScanState; proposal: ScanProposal | null } {
   const fromBarcode = barcodeVin(frame);
   if (fromBarcode !== null) return { state, proposal: { kind: 'vin', vin: fromBarcode } };
   // One reading per frame, so a frame that happens to show the VIN twice does not outvote others.
-  const [reading] = vinReadings(frame);
+  const [reading] = vinReadings(frame, currentYear);
   if (reading === undefined) return { state, proposal: null };
   const vote = addVinReading(state.vote, reading);
   const consensus = vinConsensus(vote);
@@ -75,9 +100,9 @@ export function interpretOdometerFrame(
 }
 
 /** The shutter fallback: one still, no voting, best guess (or both when two tie). */
-export function interpretStill(mode: 'vin' | 'odometer', frame: ScanFrame, context: ScanContext): ScanProposal | null {
+export function interpretStill(mode: 'vin' | 'odometer', frame: ScanFrame, context: ScanContext, currentYear: number): ScanProposal | null {
   if (mode === 'vin') {
-    const vin = barcodeVin(frame) ?? vinReadings(frame)[0];
+    const vin = barcodeVin(frame) ?? vinReadings(frame, currentYear)[0];
     return vin === undefined ? null : { kind: 'vin', vin };
   }
   const [first, second] = pickOdometerCandidates(frame.lines, { bounds: context.odometerBounds });

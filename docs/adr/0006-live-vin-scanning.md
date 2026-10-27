@@ -17,3 +17,11 @@ Most windshield VIN plates are printed text; many door-jamb stickers carry a bar
 - If VisionCamera is chosen it replaces `expo-camera` for every camera use (QR, barcode, text).
 - Feasibility on SDK 58 is unverified → spike before the spec locks the library.
 - Real-device testing on both platforms is required; the iOS simulator has no camera, tests need a JS mock.
+
+## Amendment (2026-10-27): false positives from other windshield text
+
+A real-device scan locked onto the glass maker's stamp ("LAMINATED DOT825 AS1 M850"): joining every OCR line and sliding a 17-character window produced strings that passed the check digit (1 in 11 odds per window). Defences, in order:
+
+- VIN mode runs text recognition only on a band around the guide box (ML Kit `roi`; the band axis differs per platform because iOS crops the sensor buffer before rotating and Android after).
+- OCR lines are only joined when they sit on the same row.
+- The validator requires a numeric serial, and camera reads must encode a model year that has already happened.

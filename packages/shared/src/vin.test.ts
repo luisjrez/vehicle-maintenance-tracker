@@ -37,8 +37,20 @@ describe('validateVin', () => {
     ['1HGCM8263ZA004352', 'INVALID_YEAR_CODE'],
     ['1HGCM82630A004352', 'INVALID_YEAR_CODE'],
     ['1HGCM82633A004353', 'CHECK_DIGIT'],
+    // Both pass the check digit by chance; they are OCR reads of a windshield's "LAMINATED DOT825 AS1 M850" glass stamp.
+    ['ATEDD0T825AS1M850', 'INVALID_SERIAL'],
+    ['NATED0DT825A51M85', 'INVALID_SERIAL'],
+    ['5YJ3E1EA4KF31700A', 'INVALID_SERIAL'],
   ])('rejects %s with %s', (vin, reason) => {
     expect(validateVin(vin)).toMatchObject({ ok: false, reason });
+  });
+
+  it('accepts a Mexico-built VIN', () => {
+    expect(validateVin('3MZBM2V73GM257429')).toEqual({ ok: true, vin: '3MZBM2V73GM257429' });
+  });
+
+  it('lets small manufacturers (a 9 in position 3) use a letter in position 14', () => {
+    expect(validateVin('1M9AB12C1HXYZA234')).toEqual({ ok: true, vin: '1M9AB12C1HXYZA234' });
   });
 
   it('explains each failure in plain English', () => {

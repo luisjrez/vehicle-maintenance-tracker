@@ -12,7 +12,7 @@ const WEIGHTS = [8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2] as const;
 /** Position-10 codes in cycle order; index 0 is 1980 (or 2010). U, Z and 0 are never used. */
 const YEAR_CODES = 'ABCDEFGHJKLMNPRSTVWXY123456789';
 
-export type VinFailureReason = 'LENGTH' | 'INVALID_CHARACTERS' | 'INVALID_YEAR_CODE' | 'CHECK_DIGIT';
+export type VinFailureReason = 'LENGTH' | 'INVALID_CHARACTERS' | 'INVALID_YEAR_CODE' | 'INVALID_SERIAL' | 'CHECK_DIGIT';
 
 export type VinValidation = { ok: true; vin: string } | { ok: false; reason: VinFailureReason; message: string };
 
@@ -20,6 +20,7 @@ const MESSAGES: Record<VinFailureReason, string> = {
   LENGTH: 'A VIN has exactly 17 characters.',
   INVALID_CHARACTERS: 'A VIN uses only letters and digits, and never I, O or Q.',
   INVALID_YEAR_CODE: 'The 10th character is not a valid model-year code.',
+  INVALID_SERIAL: 'The last characters of a VIN are always digits.',
   CHECK_DIGIT: "This VIN doesn't add up — check for typos such as 0 vs D, 8 vs B or 5 vs S.",
 };
 
@@ -42,6 +43,17 @@ export function computeCheckDigit(vin: string): string {
   return remainder === 10 ? 'X' : String(remainder);
 }
 
+/**
+ * 49 CFR 565.15: positions 14–17 are numeric for every vehicle type (13–17 for
+ * light vehicles, but the type is unknown here). Small manufacturers — a 9 in
+ * position 3 — spend positions 12–14 on their identifier, so only 15–17 count.
+ * Without this, OCR of unrelated text passes the check digit 1 time in 11.
+ */
+function hasNumericSerial(vin: string): boolean {
+  const start = vin.charAt(2) === '9' ? 14 : 13;
+  return /^\d+$/.test(vin.slice(start));
+}
+
 const fail = (reason: VinFailureReason): VinValidation => ({ ok: false, reason, message: MESSAGES[reason] });
 
 /** Strict validation: a failing check digit is a typo in practice, so it is rejected, not warned. */
@@ -50,6 +62,7 @@ export function validateVin(input: string): VinValidation {
   if (vin.length !== VIN_LENGTH) return fail('LENGTH');
   if (!VIN_ALPHABET.test(vin)) return fail('INVALID_CHARACTERS');
   if (!YEAR_CODES.includes(vin.charAt(9))) return fail('INVALID_YEAR_CODE');
+  if (!hasNumericSerial(vin)) return fail('INVALID_SERIAL');
   if (computeCheckDigit(vin) !== vin.charAt(8)) return fail('CHECK_DIGIT');
   return { ok: true, vin };
 }

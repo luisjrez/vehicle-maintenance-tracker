@@ -93,7 +93,7 @@ export function ScannerScreen({ initialMode, locked, now = Date.now }: Props) {
         return;
       }
       if (mode === 'vin') {
-        const step = interpretVinFrame(vinScan.current, frame);
+        const step = interpretVinFrame(vinScan.current, frame, new Date(now()).getFullYear());
         vinScan.current = step.state;
         if (step.proposal !== null) propose(step.proposal);
         return;
@@ -111,10 +111,10 @@ export function ScannerScreen({ initialMode, locked, now = Date.now }: Props) {
     setNotice(null);
     const still = await captureRef.current.capture();
     setCapturing(false);
-    const proposal = still === null ? null : interpretStill(mode, still, context);
+    const proposal = still === null ? null : interpretStill(mode, still, context, new Date(now()).getFullYear());
     if (proposal === null) setNotice(t.nothingFound);
     else propose(proposal);
-  }, [mode, context, propose, t.nothingFound]);
+  }, [mode, context, now, propose, t.nothingFound]);
 
   const handleTakePhoto = useCallback(() => {
     void takePhoto();
