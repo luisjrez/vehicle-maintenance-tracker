@@ -15,6 +15,12 @@ export const strings = {
     detailsRow: 'Vehicle details & VIN',
     newRecord: 'Add',
     history: 'History',
+    spending: 'Spending',
+    allTime: 'All time',
+    lifetimeTotal: 'Lifetime total',
+    yearTotal: (year: number) => `Total in ${year}`,
+    noSpending: 'Nothing spent in this period.',
+    thisYear: (amount: string) => `${amount} this year`,
     historyEmpty: 'No work logged yet. Tap + to log your first service.',
   },
   actions: {

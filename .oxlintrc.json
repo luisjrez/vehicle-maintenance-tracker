@@ -44,7 +44,8 @@
           "__dirname"
         ]
       }
-    ]
+    ],
+    "unicorn/no-array-sort": "off"
   },
   "ignorePatterns": [
     "**/dist/**",

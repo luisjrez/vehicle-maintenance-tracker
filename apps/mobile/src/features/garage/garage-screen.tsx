@@ -1,16 +1,16 @@
-import { currentMileage } from '@vmt/shared';
+import { currentMileage, spendingReport } from '@vmt/shared';
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ListRow } from '@/components/list-row';
 import { SectionHeader } from '@/components/section-header';
-import { spentInYear } from '@/shared/spend';
 import { selectSelectedVehicle, useGarageStore } from '@/shared/store/garage-store';
 import { useVehicleRecords } from '@/shared/store/use-vehicle-records';
 import { strings } from '@/shared/strings';
 import { colors } from '@/shared/ui/colors';
 import { GarageEmptyState } from './garage-empty-state';
 import { HistoryList } from './history-list';
+import { SpendingReportCard } from './spending-report-card';
 import { VehicleCarousel } from './vehicle-carousel';
 import { VehicleSummaryCard } from './vehicle-summary-card';
 
@@ -47,6 +47,7 @@ export function GarageScreen() {
         <VehicleCarousel
           vehicles={vehicles}
           records={allRecords}
+          year={year}
           selectedVehicleId={selected.id}
           onSelect={selectVehicle}
           onAdd={openAddVehicle}
@@ -55,10 +56,12 @@ export function GarageScreen() {
           <VehicleSummaryCard
             vehicle={selected}
             mileage={currentMileage(selected, records)}
-            spentThisYearCents={spentInYear(records, year)}
+            spentThisYearCents={spendingReport(records, year).totalCents}
             year={year}
           />
           <ListRow testID="vehicle-details-row" title={strings.garage.detailsRow} onPress={openDetails} />
+          <SectionHeader title={strings.garage.spending} />
+          <SpendingReportCard key={selected.id} records={records} />
           <SectionHeader title={strings.garage.history} />
           <HistoryList records={records} onOpen={openRecord} />
         </View>

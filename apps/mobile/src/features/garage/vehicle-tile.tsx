@@ -1,12 +1,19 @@
 import { type Vehicle, vehicleDisplayName } from '@vmt/shared';
 import { useCallback } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { formatMiles } from '@/shared/format';
+import { formatCents, formatMiles } from '@/shared/format';
+import { strings } from '@/shared/strings';
 import { colors } from '@/shared/ui/colors';
 
-type Props = { vehicle: Vehicle; mileage: number; selected: boolean; onSelect: (vehicleId: string) => void };
+type Props = {
+  vehicle: Vehicle;
+  mileage: number;
+  spentThisYearCents: number;
+  selected: boolean;
+  onSelect: (vehicleId: string) => void;
+};
 
-export function VehicleTile({ vehicle, mileage, selected, onSelect }: Props) {
+export function VehicleTile({ vehicle, mileage, spentThisYearCents, selected, onSelect }: Props) {
   const handlePress = useCallback(() => onSelect(vehicle.id), [onSelect, vehicle.id]);
   const subtitle = vehicle.nickname === null ? vehicle.make : vehicle.nickname;
 
@@ -26,6 +33,9 @@ export function VehicleTile({ vehicle, mileage, selected, onSelect }: Props) {
       </Text>
       <Text accessibilityLabel={vehicleDisplayName(vehicle)} numberOfLines={1} style={styles.caption}>
         {formatMiles(mileage)}
+      </Text>
+      <Text testID={`vehicle-tile-spent-${vehicle.id}`} numberOfLines={1} style={styles.caption}>
+        {strings.garage.thisYear(formatCents(spentThisYearCents, { wholeDollars: true }))}
       </Text>
     </Pressable>
   );

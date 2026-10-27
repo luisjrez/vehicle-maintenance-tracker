@@ -138,15 +138,15 @@ Status: done
 
 ## 10. Spending report
 
-Status: ready-for-agent
+Status: done
 
 **What to build:** The vehicle view shows a basic spending report: year chips (All time + each year with records), the total for the selection, and horizontal per-category bars; the carousel shows each vehicle's spend this year. Line-item costs count toward their service's category; any unallocated remainder of a record's total goes to its first line item's category.
 
 **Blocked by:** 7. Log a service record
 
-- [ ] Aggregation as a pure function in the shared package, built test-first (allocated vs unallocated, custom services → Other, year filter)
-- [ ] Report section and carousel totals formatted en-US
-- [ ] Component test with a fixture of mixed records
+- [x] Aggregation as a pure function in the shared package, built test-first (allocated vs unallocated, custom services → Other, year filter)
+- [x] Report section and carousel totals formatted en-US
+- [x] Component test with a fixture of mixed records
 
 ## 11. Offline browsing & resilient writes
 
