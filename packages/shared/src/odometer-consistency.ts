@@ -22,12 +22,18 @@ export type OdometerCheck = { ok: true } | { ok: false; conflict: OdometerConfli
 const miles = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 const day = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 
-function readings(vehicle: VehicleReading, records: readonly RecordReading[], excludeId: string | undefined): Reading[] {
+function readings(
+  vehicle: VehicleReading,
+  records: readonly RecordReading[],
+  excludeId: string | undefined,
+  includeInitial = true,
+): Reading[] {
   const fromRecords = records.flatMap((record): Reading[] =>
     record.odometer === null || record.id === excludeId
       ? []
       : [{ date: record.date, odometer: record.odometer, source: 'record', recordId: record.id }],
   );
+  if (!includeInitial) return fromRecords;
   return [
     { date: vehicle.initialOdometerDate, odometer: vehicle.initialOdometer, source: 'initial', recordId: null },
     ...fromRecords,
@@ -55,8 +61,21 @@ export function checkOdometerConsistency(
   records: readonly RecordReading[],
   candidate: Candidate,
 ): OdometerCheck {
+  return check(readings(vehicle, records, candidate.id), candidate);
+}
+
+/** Editing the initial odometer re-checks it, as a reading on the creation date, against the records. */
+export function checkInitialOdometerEdit(
+  vehicle: VehicleReading,
+  records: readonly RecordReading[],
+  initialOdometer: number,
+): OdometerCheck {
+  return check(readings(vehicle, records, undefined, false), { date: vehicle.initialOdometerDate, odometer: initialOdometer });
+}
+
+function check(all: readonly Reading[], candidate: Candidate): OdometerCheck {
   if (candidate.odometer === null) return { ok: true };
-  const { before, after } = neighbours(readings(vehicle, records, candidate.id), candidate.date);
+  const { before, after } = neighbours(all, candidate.date);
   const offending =
     before !== undefined && candidate.odometer < before.odometer
       ? { side: 'before' as const, reading: before }

@@ -2,6 +2,7 @@ import { CATALOG, type CatalogService, searchCatalog } from '@vmt/shared';
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, SectionList, StyleSheet, Text, TextInput, View } from 'react-native';
+import { sorted } from '@/shared/sorted';
 import { useGarageStore } from '@/shared/store/garage-store';
 import { strings } from '@/shared/strings';
 import { colors } from '@/shared/ui/colors';
@@ -30,7 +31,7 @@ export function ServicePickerScreen() {
   const previousCustomNames = useMemo(() => {
     const names = new Set<string>();
     for (const record of records) for (const item of record.lineItems) if (item.customName !== null) names.add(item.customName);
-    return [...names].toSorted((a, b) => a.localeCompare(b));
+    return sorted([...names], (a, b) => a.localeCompare(b));
   }, [records]);
 
   const sections = useMemo((): Section[] => {

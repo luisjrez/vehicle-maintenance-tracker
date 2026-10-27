@@ -87,8 +87,10 @@ export function LogWorkScreen({ vehicleId }: { vehicleId: string }) {
   }, [save]);
 
   return (
-    <View style={styles.sheet}>
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
+    // The ScrollView must be the sheet's direct child: react-native-screens' form
+    // sheet lays out a nested one with no height and the content disappears.
+    <>
+      <ScrollView style={styles.sheet} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         <Text style={styles.stepLabel}>{strings.logWork.stepOf(step)}</Text>
         <Text style={styles.title}>{STEP_TITLES[step]}</Text>
         {step === 1 ? <WhatStep error={errors.lineItems} onSearch={openSearch} /> : null}
@@ -110,7 +112,7 @@ export function LogWorkScreen({ vehicleId }: { vehicleId: string }) {
           )}
         </View>
       </View>
-    </View>
+    </>
   );
 }
 
@@ -119,6 +121,6 @@ const styles = StyleSheet.create({
   content: { padding: 20, gap: 12, paddingBottom: 32 },
   stepLabel: { fontSize: 13, color: colors.secondaryLabel, fontWeight: '600' },
   title: { fontSize: 24, fontWeight: '700', color: colors.label, paddingBottom: 4 },
-  footer: { flexDirection: 'row', gap: 12, padding: 16, paddingBottom: 32, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.separator },
+  footer: { backgroundColor: colors.background, flexDirection: 'row', gap: 12, padding: 16, paddingBottom: 32, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.separator },
   footerButton: { flex: 1 },
 });

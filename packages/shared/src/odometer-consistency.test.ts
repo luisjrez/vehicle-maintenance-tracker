@@ -1,4 +1,4 @@
-import { checkOdometerConsistency, odometerBounds } from './odometer-consistency.js';
+import { checkInitialOdometerEdit, checkOdometerConsistency, odometerBounds } from './odometer-consistency.js';
 
 const vehicle = { initialOdometer: 40_000, initialOdometerDate: '2026-01-10' };
 const records = [
@@ -61,5 +61,13 @@ describe('odometerBounds', () => {
   it('returns the plausible range for a date', () => {
     expect(odometerBounds(vehicle, records, '2026-04-15')).toEqual({ min: 45_000, max: 52_000 });
     expect(odometerBounds(vehicle, records, '2027-01-01')).toEqual({ min: 52_000, max: null });
+  });
+});
+
+describe('checkInitialOdometerEdit', () => {
+  it('checks a new initial odometer against the records around the creation date', () => {
+    expect(checkInitialOdometerEdit(vehicle, records, 44_000)).toEqual({ ok: true });
+    expect(checkInitialOdometerEdit(vehicle, records, 46_000)).toMatchObject({ ok: false, conflict: { recordId: 'r2' } });
+    expect(checkInitialOdometerEdit(vehicle, records, 29_000)).toMatchObject({ ok: false, conflict: { recordId: 'r1' } });
   });
 });

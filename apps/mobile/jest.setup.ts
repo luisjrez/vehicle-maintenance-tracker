@@ -20,3 +20,8 @@ jest.mock('@/shared/store/mmkv-storage', () => {
     },
   };
 });
+
+// Hermes has no change-array-by-copy methods yet; remove them so tests fail like the device would.
+for (const method of ['toSorted', 'toReversed', 'toSpliced', 'with']) {
+  Reflect.deleteProperty(Array.prototype, method);
+}
