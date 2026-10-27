@@ -60,7 +60,8 @@ model Vehicle {
   createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  owner Owner @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner   Owner           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  records ServiceRecord[]
 
   // VIN is unique per Owner only (ADR-0003); NULLs never collide in Postgres.
   @@unique([ownerId, vin])
@@ -79,4 +80,76 @@ model VinDecodeCache {
   expiresAt DateTime? @map("expires_at") @db.Timestamptz(3)
 
   @@map("vin_decode_cache")
+}
+
+enum ProviderType {
+  dealer
+  chain
+  independent
+  diy
+
+  @@map("provider_type")
+}
+
+/// One visit/job on a date (ADR-0004, domain model). Hard-deleted with its vehicle.
+model ServiceRecord {
+  id           String        @id @default(uuid(7)) @db.Uuid
+  vehicleId    String        @map("vehicle_id") @db.Uuid
+  date         DateTime      @db.Date
+  odometer     Int?
+  providerName String?       @map("provider_name")
+  providerType ProviderType? @map("provider_type")
+  notes        String?
+  totalCents   Int           @map("total_cents")
+  currency     String        @default("USD") @db.Char(3)
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  vehicle   Vehicle    @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  lineItems LineItem[]
+
+  @@index([vehicleId, date])
+  @@map("service_records")
+}
+
+/// A service performed within a record: a catalog slug XOR a custom name.
+model LineItem {
+  id          String  @id @default(uuid(7)) @db.Uuid
+  recordId    String  @map("record_id") @db.Uuid
+  position    Int     @db.SmallInt
+  serviceSlug String? @map("service_slug")
+  customName  String? @map("custom_name")
+  costCents   Int?    @map("cost_cents")
+  notes       String?
+  packageCode String? @map("package_code")
+
+  record  ServiceRecord   @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  service CatalogService? @relation(fields: [serviceSlug], references: [slug], onDelete: Restrict)
+
+  @@index([recordId])
+  @@map("line_items")
+}
+
+/// Seeded from packages/shared on every deploy; never edited by hand (ADR-0004).
+model CatalogCategory {
+  slug     String           @id
+  name     String
+  position Int              @db.SmallInt
+  services CatalogService[]
+
+  @@map("catalog_categories")
+}
+
+model CatalogService {
+  slug            String  @id
+  categorySlug    String  @map("category_slug")
+  name            String
+  description     String
+  typicalInterval String? @map("typical_interval")
+  retired         Boolean @default(false)
+
+  category  CatalogCategory @relation(fields: [categorySlug], references: [slug])
+  lineItems LineItem[]
+
+  @@map("catalog_services")
 }

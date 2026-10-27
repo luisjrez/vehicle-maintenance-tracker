@@ -97,31 +97,31 @@ Status: ready-for-agent
 
 ## 7. Log a service record
 
-Status: ready-for-agent
+Status: done
 
 **What to build:** The Owner taps "+" → action sheet → "Log work" and completes a 3-step bottom-sheet wizard: (1) what was done — common-services chips plus a searchable picker over the 14-category / 117-service catalog with "Custom: <name>" (suggesting previously used custom names); (2) date, optional odometer, provider name + type; (3) required total paid, optional per-line cost and notes, record notes. The record appears in the vehicle's history (ADR-0004).
 
 **Blocked by:** 4. Add a vehicle manually + garage home
 
-- [ ] Catalog (categories, services, immutable slugs, `retired` flag, typical intervals as data, a few EV/hybrid items) defined in the shared package and seeded into the DB
-- [ ] Service record + line item tables; line item = catalog slug XOR custom name; optional package code for "Scheduled maintenance"
-- [ ] Create/list records endpoints; total in integer cents (≥0), `currency = "USD"`, date not in the future, ≥1 line item
-- [ ] Action sheet (Log work / Add vehicle / Transfer placeholder) and wizard as native sheets
-- [ ] History list on Home, newest first (services, date, odometer, provider, total)
-- [ ] Tests: schema rules, seed idempotency, wizard happy path
+- [x] Catalog (categories, services, immutable slugs, `retired` flag, typical intervals as data, a few EV/hybrid items) defined in the shared package and seeded into the DB (14 categories, 120 services: the 116 researched — `custom` became the line item's custom name — plus 4 EV/hybrid items)
+- [x] Service record + line item tables; line item = catalog slug XOR custom name; optional package code for "Scheduled maintenance"
+- [x] Create/list records endpoints; total in integer cents (≥0), `currency = "USD"`, date not in the future, ≥1 line item
+- [x] Action sheet (Log work / Add vehicle / Transfer placeholder) and wizard as native sheets
+- [x] History list on Home, newest first (services, date, odometer, provider, total)
+- [x] Tests: schema rules, seed idempotency, wizard happy path
 
 ## 8. Odometer consistency
 
-Status: ready-for-agent
+Status: done
 
 **What to build:** Odometer readings never go backwards in time: a record's odometer must be ≥ the highest reading dated before it and ≤ the lowest dated after it (equal allowed), with the vehicle's initial odometer as a reading on its creation date; violations are rejected in the wizard with an inline message naming the conflicting reading, and by the API. Current mileage is derived, never stored (ADR-0007).
 
 **Blocked by:** 7. Log a service record
 
-- [ ] Pure rule in the shared package, built test-first (backfill before creation, same-day equal, records without odometer skipped, editing a record excludes itself)
-- [ ] API rejects violations with a clear English error; app shows it inline on step 2
-- [ ] Current mileage derived everywhere it is shown
-- [ ] Integration test: out-of-order backfilling succeeds when coherent, fails when not
+- [x] Pure rule in the shared package, built test-first (backfill before creation, same-day equal, records without odometer skipped, editing a record excludes itself)
+- [x] API rejects violations with a clear English error; app shows it inline on step 2
+- [x] Current mileage derived everywhere it is shown
+- [x] Integration test: out-of-order backfilling succeeds when coherent, fails when not
 
 ## 9. Record detail, edit & delete
 

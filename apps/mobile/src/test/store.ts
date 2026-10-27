@@ -1,5 +1,7 @@
+import { useLogWorkDraft } from '@/features/log-work/log-work-draft';
 import { useGarageStore } from '@/shared/store/garage-store';
 
 export function resetGarageStore(): void {
-  useGarageStore.setState({ vehicles: [], selectedVehicleId: null, vehiclesSyncedAt: null });
+  useGarageStore.setState({ vehicles: [], records: [], selectedVehicleId: null, vehiclesSyncedAt: null });
+  useLogWorkDraft.getState().reset();
 }

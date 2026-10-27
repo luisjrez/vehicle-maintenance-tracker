@@ -1,4 +1,4 @@
-import type { Vehicle } from '@vmt/shared';
+import type { ServiceRecord, Vehicle } from '@vmt/shared';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { mmkvStorage } from './mmkv-storage';
@@ -9,27 +9,42 @@ import { mmkvStorage } from './mmkv-storage';
  */
 export type GarageState = {
   vehicles: Vehicle[];
+  records: ServiceRecord[];
   selectedVehicleId: string | null;
   /** Epoch ms of the last successful vehicle list fetch. */
   vehiclesSyncedAt: number | null;
   replaceVehicles: (vehicles: Vehicle[], syncedAt: number) => void;
+  replaceRecords: (records: ServiceRecord[]) => void;
   upsertVehicle: (vehicle: Vehicle) => void;
+  removeVehicle: (vehicleId: string) => void;
+  upsertRecord: (record: ServiceRecord) => void;
+  removeRecord: (recordId: string) => void;
   selectVehicle: (vehicleId: string) => void;
 };
+
+function upsert<T extends { id: string }>(items: T[], item: T): T[] {
+  return items.some((existing) => existing.id === item.id)
+    ? items.map((existing) => (existing.id === item.id ? item : existing))
+    : [...items, item];
+}
 
 export const useGarageStore = create<GarageState>()(
   persist(
     (set) => ({
       vehicles: [],
+      records: [],
       selectedVehicleId: null,
       vehiclesSyncedAt: null,
       replaceVehicles: (vehicles, syncedAt) => set({ vehicles, vehiclesSyncedAt: syncedAt }),
-      upsertVehicle: (vehicle) =>
+      replaceRecords: (records) => set({ records }),
+      upsertVehicle: (vehicle) => set((state) => ({ vehicles: upsert(state.vehicles, vehicle) })),
+      removeVehicle: (vehicleId) =>
         set((state) => ({
-          vehicles: state.vehicles.some((existing) => existing.id === vehicle.id)
-            ? state.vehicles.map((existing) => (existing.id === vehicle.id ? vehicle : existing))
-            : [...state.vehicles, vehicle],
+          vehicles: state.vehicles.filter((vehicle) => vehicle.id !== vehicleId),
+          records: state.records.filter((record) => record.vehicleId !== vehicleId),
         })),
+      upsertRecord: (record) => set((state) => ({ records: upsert(state.records, record) })),
+      removeRecord: (recordId) => set((state) => ({ records: state.records.filter((record) => record.id !== recordId) })),
       selectVehicle: (vehicleId) => set({ selectedVehicleId: vehicleId }),
     }),
     { name: 'garage', version: 1, storage: createJSONStorage(() => mmkvStorage) },

@@ -42,7 +42,7 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-c
   && rm -rf /var/lib/apt/lists/* \
   && node_modules/.bin/prisma version
 USER node
-CMD ["node_modules/.bin/prisma", "migrate", "deploy"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node dist/seed.js"]
 
 # --- runtime: Node 24, no Prisma CLI, non-root ---
 FROM node:24-slim AS runtime

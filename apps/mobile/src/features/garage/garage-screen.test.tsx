@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { useGarageStore } from '@/shared/store/garage-store';
-import { vehicleFixture } from '@/test/fixtures';
+import { recordFixture, vehicleFixture } from '@/test/fixtures';
 import { resetRouterMock, routerMock } from '@/test/router-mock';
 import { resetGarageStore } from '@/test/store';
 import { GarageScreen } from './garage-screen';
@@ -45,5 +45,33 @@ describe('GarageScreen', () => {
     await render(<GarageScreen />);
 
     expect(screen.getByTestId('vehicle-summary-name')).toHaveTextContent('2019 Honda Civic');
+  });
+});
+
+describe('GarageScreen history', () => {
+  beforeEach(() => {
+    resetGarageStore();
+  });
+
+  it('lists the selected vehicle’s records newest first and derives mileage and spend from them', async () => {
+    const vehicle = vehicleFixture({ id: 'vehicle-1', initialOdometer: 40_000 });
+    const older = recordFixture({ vehicleId: 'vehicle-1', date: `${new Date().getFullYear() - 1}-05-01`, totalCents: 10_000 });
+    const newer = recordFixture({
+      vehicleId: 'vehicle-1',
+      date: `${new Date().getFullYear()}-02-01`,
+      odometer: 52_000,
+      totalCents: 42_995,
+      providerName: 'Jiffy Lube',
+    });
+    const otherCar = recordFixture({ vehicleId: 'vehicle-2', totalCents: 99_999 });
+    useGarageStore.setState({ vehicles: [vehicle], records: [older, otherCar, newer] });
+
+    await render(<GarageScreen />);
+
+    const rows = screen.getAllByTestId(/^history-row-/);
+    expect(rows.map((row) => row.props.testID)).toEqual([`history-row-${newer.id}`, `history-row-${older.id}`]);
+    expect(screen.getByTestId('vehicle-summary-mileage')).toHaveTextContent('52,000 mi');
+    expect(screen.getByTestId('vehicle-summary-spent')).toHaveTextContent('$429.95');
+    expect(screen.getByTestId(`history-row-${newer.id}`)).toHaveTextContent(/Oil & filter change.*Jiffy Lube.*\$429\.95/);
   });
 });

@@ -2,22 +2,31 @@ import { currentMileage } from '@vmt/shared';
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SectionHeader } from '@/components/section-header';
+import { spentInYear } from '@/shared/spend';
 import { selectSelectedVehicle, useGarageStore } from '@/shared/store/garage-store';
+import { useVehicleRecords } from '@/shared/store/use-vehicle-records';
+import { strings } from '@/shared/strings';
 import { colors } from '@/shared/ui/colors';
 import { GarageEmptyState } from './garage-empty-state';
+import { HistoryList } from './history-list';
 import { VehicleCarousel } from './vehicle-carousel';
 import { VehicleSummaryCard } from './vehicle-summary-card';
 
 export function GarageScreen() {
   const router = useRouter();
   const vehicles = useGarageStore((state) => state.vehicles);
+  const allRecords = useGarageStore((state) => state.records);
   const selected = useGarageStore(selectSelectedVehicle);
   const selectVehicle = useGarageStore((state) => state.selectVehicle);
+  const records = useVehicleRecords(selected?.id);
   // Read once per mount; a year boundary while the app is open is not worth a timer.
   const [year] = useState(() => new Date().getFullYear());
 
   const openAddVehicle = useCallback(() => router.push('/add-vehicle'), [router]);
   const openReceive = useCallback(() => router.push('/settings'), [router]);
+  const openActions = useCallback(() => router.push('/actions'), [router]);
+  const openRecord = useCallback((recordId: string) => router.push({ pathname: '/records/[recordId]', params: { recordId } }), [router]);
 
   if (vehicles.length === 0 || selected === undefined) {
     return (
@@ -32,6 +41,7 @@ export function GarageScreen() {
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
         <VehicleCarousel
           vehicles={vehicles}
+          records={allRecords}
           selectedVehicleId={selected.id}
           onSelect={selectVehicle}
           onAdd={openAddVehicle}
@@ -39,13 +49,15 @@ export function GarageScreen() {
         <View style={styles.section}>
           <VehicleSummaryCard
             vehicle={selected}
-            mileage={currentMileage(selected, [])}
-            spentThisYearCents={0}
+            mileage={currentMileage(selected, records)}
+            spentThisYearCents={spentInYear(records, year)}
             year={year}
           />
+          <SectionHeader title={strings.garage.history} />
+          <HistoryList records={records} onOpen={openRecord} />
         </View>
       </ScrollView>
-      <Pressable testID="garage-fab" accessibilityRole="button" accessibilityLabel="Add" onPress={openAddVehicle} style={styles.fab}>
+      <Pressable testID="garage-fab" accessibilityRole="button" accessibilityLabel="Add" onPress={openActions} style={styles.fab}>
         <Text style={styles.fabLabel}>+</Text>
       </Pressable>
     </View>

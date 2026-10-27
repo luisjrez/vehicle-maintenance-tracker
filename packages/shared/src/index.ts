@@ -8,3 +8,7 @@ export * from './vehicle.js';
 export * from './odometer.js';
 export * from './vin.js';
 export * from './vin-decode.js';
+export * from './catalog.js';
+export * from './money.js';
+export * from './service-record.js';
+export * from './odometer-consistency.js';
