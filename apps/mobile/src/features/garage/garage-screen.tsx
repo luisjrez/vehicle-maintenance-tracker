@@ -49,8 +49,10 @@ export function GarageScreen() {
   }
 
   return (
-    <View style={styles.screen}>
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
+    // The ScrollView must be the screen's first child: that is the one iOS ties the
+    // large title to, so it collapses on scroll instead of covering the content.
+    <>
+      <ScrollView contentInsetAdjustmentBehavior="automatic" style={styles.screen} contentContainerStyle={styles.content}>
         <VehicleCarousel
           vehicles={vehicles}
           records={allRecords}
@@ -76,7 +78,7 @@ export function GarageScreen() {
       <Pressable testID="garage-fab" accessibilityRole="button" accessibilityLabel="Add" onPress={openActions} style={styles.fab}>
         <Text style={styles.fabLabel}>+</Text>
       </Pressable>
-    </View>
+    </>
   );
 }
 

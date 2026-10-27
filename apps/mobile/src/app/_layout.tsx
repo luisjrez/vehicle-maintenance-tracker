@@ -9,7 +9,7 @@ export default function RootLayout() {
 
   return (
     <Stack screenOptions={{ headerBackButtonDisplayMode: 'minimal' }}>
-      <Stack.Screen name="index" options={{ title: strings.garage.title, headerLargeTitle: true, headerShadowVisible: false }} />
+      <Stack.Screen name="index" options={{ title: strings.garage.title, headerLargeTitle: true, headerLargeTitleShadowVisible: false, headerBlurEffect: 'systemMaterial' }} />
       <Stack.Screen name="add-vehicle" options={{ title: strings.addVehicle.title, presentation: 'modal' }} />
       <Stack.Screen name="settings" options={{ title: strings.settings.title }} />
       <Stack.Screen name="vehicles/[vehicleId]" options={{ title: strings.vehicleDetails.title }} />

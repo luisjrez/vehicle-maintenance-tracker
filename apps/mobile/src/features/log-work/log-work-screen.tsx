@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { type LayoutChangeEvent, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/components/button';
 import { ErrorBanner } from '@/components/error-banner';
 import { ApiError, errorMessage } from '@/shared/api/api-error';
@@ -13,6 +13,8 @@ import { buildRecordInput, type DraftErrors, odometerConsistencyError, stepError
 import { useLogWorkDraft } from '@/shared/log-work-draft/log-work-draft';
 import { WhatStep } from './what-step';
 import { WhenStep } from './when-step';
+
+const CONTENT_BOTTOM_PADDING = 32;
 
 const STEP_TITLES = { 1: strings.logWork.whatTitle, 2: strings.logWork.whenTitle, 3: strings.logWork.costTitle } as const;
 
@@ -87,11 +89,24 @@ export function LogWorkScreen({ vehicleId }: { vehicleId: string }) {
     void save();
   }, [save]);
 
+  // The form sheet stretches its ScrollView to the full sheet height, so the footer
+  // sits on top of the last fields; reserve its height at the end of the content.
+  const [footerHeight, setFooterHeight] = useState(0);
+  const handleFooterLayout = useCallback((event: LayoutChangeEvent) => setFooterHeight(event.nativeEvent.layout.height), []);
+  const contentStyle = useMemo(() => [styles.content, { paddingBottom: CONTENT_BOTTOM_PADDING + footerHeight }], [footerHeight]);
+  const indicatorInsets = useMemo(() => ({ bottom: footerHeight }), [footerHeight]);
+
   return (
     // The ScrollView must be the sheet's direct child: react-native-screens' form
     // sheet lays out a nested one with no height and the content disappears.
     <>
-      <ScrollView style={styles.sheet} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.sheet}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        contentContainerStyle={contentStyle}
+        scrollIndicatorInsets={indicatorInsets}
+      >
         <Text style={styles.stepLabel}>
           {`${recordId === null ? strings.logWork.title : strings.logWork.editTitle} · ${strings.logWork.stepOf(step)}`}
         </Text>
@@ -101,7 +116,7 @@ export function LogWorkScreen({ vehicleId }: { vehicleId: string }) {
         {step === 3 ? <CostStep errors={errors} /> : null}
         {saveError === null ? null : <ErrorBanner testID="log-work-save-error" message={saveError} onRetry={handleSave} />}
       </ScrollView>
-      <View style={styles.footer}>
+      <View style={styles.footer} onLayout={handleFooterLayout}>
         {step > 1 ? (
           <View style={styles.footerButton}>
             <Button testID="log-work-back" title={strings.logWork.back} variant="secondary" onPress={goBack} />
@@ -121,7 +136,7 @@ export function LogWorkScreen({ vehicleId }: { vehicleId: string }) {
 
 const styles = StyleSheet.create({
   sheet: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 20, gap: 12, paddingBottom: 32 },
+  content: { padding: 20, gap: 12 },
   stepLabel: { fontSize: 13, color: colors.secondaryLabel, fontWeight: '600' },
   title: { fontSize: 24, fontWeight: '700', color: colors.label, paddingBottom: 4 },
   footer: { backgroundColor: colors.background, flexDirection: 'row', gap: 12, padding: 16, paddingBottom: 32, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.separator },

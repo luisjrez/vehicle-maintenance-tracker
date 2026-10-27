@@ -46,6 +46,7 @@ describe('LogWorkScreen', () => {
 
     await fireEvent.changeText(screen.getByTestId('log-work-total'), '89.99');
     await fireEvent.changeText(screen.getByTestId('line-cost-0'), '49.99');
+    await fireEvent.changeText(screen.getByTestId('log-work-notes'), 'Next service at 57k.');
     await fireEvent.press(screen.getByTestId('log-work-save'));
 
     expect(fetchMock).toHaveBeenCalledWith(expect.stringMatching(/\/v1\/vehicles\/vehicle-1\/records$/), expect.anything());
@@ -54,6 +55,7 @@ describe('LogWorkScreen', () => {
       odometer: 52_000,
       providerName: 'Jiffy Lube',
       providerType: 'chain',
+      notes: 'Next service at 57k.',
       totalCents: 8_999,
       lineItems: [
         { serviceSlug: 'oil-change', costCents: 4_999 },
