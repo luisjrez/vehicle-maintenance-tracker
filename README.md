@@ -52,3 +52,10 @@ bun run test                  # jest-expo
 - The app reaches the API at `EXPO_PUBLIC_API_URL`, or by default at the Metro host on port 3020 (Android emulator: `adb reverse tcp:3020 tcp:3020 && adb reverse tcp:8082 tcp:8082`).
 - Bun **isolated** installs work for the app. Two things were needed: `jest.config.js` adds Bun's `.bun` store to jest-expo's `transformIgnorePatterns`, and the root `overrides` pin `react`/`react-dom` to the SDK's 19.3.0 (Prisma Studio otherwise pulls a second React). `expo-doctor` still reports duplicate `expo`/`expo-constants` folders (peer-dependency variants of the same version); the Metro bundle contains a single copy of each, checked via the export source map. Switch `bunfig.toml` to `linker = "hoisted"` only if a native build breaks.
 - Every request carries `X-Device-Id` (`ANDROID_ID` on Android, a Keychain UUID on iOS). It is a credential: never log or display it.
+
+### Scanner (VisionCamera 5.2.3 + ML Kit 2.0.1)
+
+- All camera code lives in `apps/mobile/src/features/scanner/scanner-camera.tsx`; Jest swaps it for `src/test/scanner-camera-mock.tsx`. Frame callbacks never throw (an exception there kills the app on iOS release builds).
+- **iOS simulator: x86_64 only.** ML Kit ships no arm64-simulator slice, so build the simulator app under Rosetta: `xcodebuild … -sdk iphonesimulator ARCHS=x86_64 ONLY_ACTIVE_ARCH=NO`. The simulator has no camera anyway; the scanner shows "No camera is available". Real scanning needs a physical device.
+- Android bundles the Latin text and barcode models (no Play Services download); `android.builtInKotlin=false` stays in `gradle.properties` until VisionCamera supports AGP's built-in Kotlin.
+- Only the Latin text model is installed (the plugin's CJK/Devanagari flags are `false` in `app.json`).

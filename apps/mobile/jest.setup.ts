@@ -25,3 +25,12 @@ jest.mock('@/shared/store/mmkv-storage', () => {
 for (const method of ['toSorted', 'toReversed', 'toSpliced', 'with']) {
   Reflect.deleteProperty(Array.prototype, method);
 }
+
+// VisionCamera and ML Kit are native; the scanner bridge is swapped for a JS mock.
+jest.mock('@/features/scanner/scanner-camera', () =>
+  jest.requireActual<typeof import('@/test/scanner-camera-mock')>('@/test/scanner-camera-mock'),
+);
+
+jest.mock('react-native-safe-area-context', () =>
+  jest.requireActual<{ default: object }>('react-native-safe-area-context/jest/mock').default,
+);

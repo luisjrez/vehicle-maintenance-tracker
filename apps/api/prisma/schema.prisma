@@ -14,8 +14,9 @@ model Owner {
   id        String   @id @default(uuid(7)) @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  devices  Device[]
-  vehicles Vehicle[]
+  devices       Device[]
+  vehicles      Vehicle[]
+  transferCodes TransferCode[]
 
   @@map("owners")
 }
@@ -152,4 +153,20 @@ model CatalogService {
   lineItems LineItem[]
 
   @@map("catalog_services")
+}
+
+/// Single-use, 10-minute code that moves an Owner to a new Device (ADR-0001).
+/// Only its hash is stored. Issuing a new code deletes the Owner's unused ones.
+model TransferCode {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  ownerId   String    @map("owner_id") @db.Uuid
+  codeHash  String    @unique @map("code_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  owner Owner @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@map("transfer_codes")
 }

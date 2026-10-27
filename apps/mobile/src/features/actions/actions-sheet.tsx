@@ -18,7 +18,7 @@ export function ActionsSheet() {
     router.replace({ pathname: '/log-work', params: { vehicleId: vehicle.id } });
   }, [router, vehicle]);
   const addVehicle = useCallback(() => router.replace('/add-vehicle'), [router]);
-  const transfer = useCallback(() => router.replace('/settings'), [router]);
+  const transfer = useCallback(() => router.replace('/transfer'), [router]);
 
   return (
     <View testID="actions-sheet" style={styles.sheet}>

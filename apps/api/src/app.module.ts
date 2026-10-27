@@ -7,11 +7,12 @@ import { DatabaseModule } from './database/database.module.js';
 import { DevicesModule } from './devices/devices.module.js';
 import { HealthModule } from './health/health.module.js';
 import { RecordsModule } from './records/records.module.js';
+import { TransferModule } from './transfer/transfer.module.js';
 import { VehiclesModule } from './vehicles/vehicles.module.js';
 import { VinModule } from './vin/vin.module.js';
 
 @Module({
-  imports: [ConfigModule, DatabaseModule, DevicesModule, HealthModule, VehiclesModule, RecordsModule, VinModule],
+  imports: [ConfigModule, DatabaseModule, DevicesModule, HealthModule, VehiclesModule, RecordsModule, TransferModule, VinModule],
   providers: [{ provide: APP_FILTER, useClass: DomainErrorFilter }],
 })
 export class AppModule implements NestModule {

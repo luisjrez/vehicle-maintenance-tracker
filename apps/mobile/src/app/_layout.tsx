@@ -26,6 +26,11 @@ export default function RootLayout() {
         options={{ presentation: 'formSheet', title: strings.servicePicker.title, sheetAllowedDetents: [0.92], sheetGrabberVisible: true }}
       />
       <Stack.Screen
+        name="transfer"
+        options={{ presentation: 'formSheet', headerShown: false, sheetAllowedDetents: [0.92], sheetGrabberVisible: true }}
+      />
+      <Stack.Screen name="scanner" options={{ presentation: 'fullScreenModal', headerShown: false, animation: 'fade' }} />
+      <Stack.Screen
         name="records/[recordId]"
         options={{ presentation: 'formSheet', headerShown: false, sheetAllowedDetents: [0.6, 0.92], sheetGrabberVisible: true }}
       />

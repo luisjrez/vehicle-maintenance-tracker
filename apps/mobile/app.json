@@ -9,7 +9,10 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "dev.luisjrez.maintenancetracker"
+      "bundleIdentifier": "dev.luisjrez.maintenancetracker",
+      "infoPlist": {
+        "NSCameraUsageDescription": "The camera reads VINs, odometers and transfer codes. Nothing is recorded or uploaded."
+      }
     },
     "android": {
       "package": "dev.luisjrez.maintenancetracker",
@@ -19,12 +22,26 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "react-native-vision-camera-mlkit",
+        {
+          "textRecognition": true,
+          "textRecognitionChinese": false,
+          "textRecognitionDevanagari": false,
+          "textRecognitionJapanese": false,
+          "textRecognitionKorean": false,
+          "barcodeScanning": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

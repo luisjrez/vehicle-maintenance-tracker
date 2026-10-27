@@ -2,11 +2,13 @@ import { currentMileage, spendingReport } from '@vmt/shared';
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ErrorBanner } from '@/components/error-banner';
 import { ListRow } from '@/components/list-row';
 import { SectionHeader } from '@/components/section-header';
 import { selectSelectedVehicle, useGarageStore } from '@/shared/store/garage-store';
 import { useVehicleRecords } from '@/shared/store/use-vehicle-records';
 import { strings } from '@/shared/strings';
+import { useReceiveTransfer } from '@/shared/transfer/use-receive-transfer';
 import { colors } from '@/shared/ui/colors';
 import { GarageEmptyState } from './garage-empty-state';
 import { HistoryList } from './history-list';
@@ -25,7 +27,7 @@ export function GarageScreen() {
   const [year] = useState(() => new Date().getFullYear());
 
   const openAddVehicle = useCallback(() => router.push('/add-vehicle'), [router]);
-  const openReceive = useCallback(() => router.push('/settings'), [router]);
+  const receive = useReceiveTransfer();
   const openActions = useCallback(() => router.push('/actions'), [router]);
   const selectedId = selected?.id;
   const openDetails = useCallback(() => {
@@ -36,7 +38,12 @@ export function GarageScreen() {
   if (vehicles.length === 0 || selected === undefined) {
     return (
       <ScrollView contentInsetAdjustmentBehavior="automatic" style={styles.screen}>
-        <GarageEmptyState onAddVehicle={openAddVehicle} onReceive={openReceive} />
+        <GarageEmptyState onAddVehicle={openAddVehicle} onReceive={receive.start} />
+        {receive.error === null ? null : (
+          <View style={styles.section}>
+            <ErrorBanner testID="garage-receive-error" message={receive.error} />
+          </View>
+        )}
       </ScrollView>
     );
   }

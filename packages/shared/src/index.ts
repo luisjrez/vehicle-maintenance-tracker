@@ -13,3 +13,4 @@ export * from './money.js';
 export * from './service-record.js';
 export * from './odometer-consistency.js';
 export * from './spending.js';
+export * from './transfer.js';
