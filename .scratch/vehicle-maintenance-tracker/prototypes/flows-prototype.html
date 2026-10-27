@@ -1,0 +1,475 @@
+<!doctype html>
+<!--
+  PROTOTYPE — throwaway. Question: "How should the core flows look and behave on mobile?"
+  Three structurally different variants of the whole app, switchable via ?variant=A|B|C
+  (floating bar at the bottom, or ← / → keys). In-memory state only; reload resets.
+  A — Tabs + garage cards, single-scroll "Log work" form.
+  B — Vehicle switcher home (one car at a time), floating "+" action sheet, 3-step wizard form.
+  C — Timeline-first home across all cars, invoice-style form with per-line costs.
+  Shared: add vehicle (type/scan VIN, invalid → "Add without VIN", review decoded details),
+  scanner (VIN / Odometer / QR), odometer consistency by date, transfer via QR.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flows Prototype</title>
+<style>
+  :root { --bg:#e9ecef; --ink:#111; --muted:#6b7280; --line:#e5e7eb; --card:#fff; --accent:#0a84ff; --danger:#ff3b30; --ok:#34c759; --warn:#ff9f0a; --soft:#f2f2f7; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); font:15px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; color:var(--ink); display:flex; justify-content:center; padding:24px 16px 96px; }
+  .phone { width:390px; max-width:100%; height:844px; background:var(--soft); border-radius:44px; border:10px solid #111; overflow:hidden; position:relative; display:flex; flex-direction:column; box-shadow:0 20px 50px rgba(0,0,0,.25); }
+  .status { height:44px; flex:none; display:flex; justify-content:space-between; align-items:center; padding:0 26px; font-weight:600; font-size:14px; }
+  .screen { flex:1; overflow-y:auto; padding:0 16px 24px; position:relative; }
+  h1 { font-size:30px; margin:6px 0 12px; }
+  h2 { font-size:20px; margin:18px 0 8px; }
+  h3 { font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:18px 4px 6px; font-weight:600; }
+  .nav { display:flex; align-items:center; justify-content:space-between; min-height:44px; }
+  .nav button { background:none; border:0; color:var(--accent); font-size:16px; padding:8px 0; cursor:pointer; }
+  .nav .title { font-weight:600; }
+  .card { background:var(--card); border-radius:14px; padding:14px; margin-bottom:10px; }
+  .list { background:var(--card); border-radius:14px; overflow:hidden; margin-bottom:10px; }
+  .row { display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-bottom:1px solid var(--line); gap:10px; cursor:pointer; }
+  .row:last-child { border-bottom:0; }
+  .muted { color:var(--muted); font-size:13px; }
+  .big { font-size:26px; font-weight:700; }
+  .btn { display:block; width:100%; border:0; border-radius:12px; padding:14px; font-size:16px; font-weight:600; background:var(--accent); color:#fff; cursor:pointer; margin:8px 0; }
+  .btn.secondary { background:#fff; color:var(--accent); }
+  .btn.danger { background:#fff; color:var(--danger); }
+  .btn:disabled { opacity:.4; }
+  label { display:block; font-size:13px; color:var(--muted); margin:10px 4px 4px; }
+  input, select, textarea { width:100%; border:1px solid var(--line); border-radius:10px; padding:11px 12px; font-size:16px; background:#fff; font-family:inherit; }
+  .err { color:var(--danger); font-size:13px; margin:4px 4px 0; }
+  .okmsg { color:var(--ok); font-size:13px; margin:4px 4px 0; }
+  .inline { display:flex; gap:8px; align-items:center; }
+  .inline > * { flex:1; }
+  .chip { display:inline-block; padding:7px 12px; border-radius:999px; background:#fff; margin:0 6px 6px 0; font-size:14px; cursor:pointer; border:1px solid var(--line); }
+  .chip.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .bar { height:8px; background:var(--line); border-radius:4px; overflow:hidden; margin-top:4px; }
+  .bar > i { display:block; height:100%; background:var(--accent); }
+  .tabs { flex:none; display:flex; border-top:1px solid var(--line); background:#fff; padding-bottom:18px; }
+  .tabs button { flex:1; background:none; border:0; padding:10px 0 4px; font-size:11px; color:var(--muted); cursor:pointer; }
+  .tabs button.on { color:var(--accent); }
+  .tabs .ico { font-size:22px; display:block; }
+  .fab { position:absolute; right:20px; bottom:28px; width:60px; height:60px; border-radius:30px; background:var(--accent); color:#fff; font-size:32px; border:0; box-shadow:0 6px 16px rgba(10,132,255,.4); cursor:pointer; z-index:5; }
+  .sheet-bg { position:absolute; inset:0; background:rgba(0,0,0,.35); z-index:10; display:flex; align-items:flex-end; }
+  .sheet { background:var(--soft); width:100%; border-radius:18px 18px 0 0; padding:12px 16px 30px; max-height:85%; overflow-y:auto; }
+  .grab { width:40px; height:5px; border-radius:3px; background:#c7c7cc; margin:0 auto 10px; }
+  .carousel { display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; margin:0 -16px; padding-left:16px; padding-right:16px; }
+  .car-tile { flex:none; width:150px; background:#fff; border-radius:14px; padding:12px; cursor:pointer; border:2px solid transparent; }
+  .car-tile.on { border-color:var(--accent); }
+  .steps { display:flex; gap:6px; margin:6px 0 12px; }
+  .steps i { flex:1; height:4px; border-radius:2px; background:var(--line); }
+  .steps i.on { background:var(--accent); }
+  .scanner { background:#000; color:#fff; border-radius:16px; height:380px; position:relative; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .guide { border:3px solid #fff; border-radius:10px; width:85%; height:70px; box-shadow:0 0 0 999px rgba(0,0,0,.45); }
+  .guide.qr { width:200px; height:200px; }
+  .guide.odo { height:120px; }
+  .guide.locked { border-color:var(--ok); }
+  .scan-hint { position:absolute; bottom:14px; left:0; right:0; text-align:center; font-size:14px; }
+  .scan-read { position:absolute; top:14px; left:0; right:0; text-align:center; font:600 16px ui-monospace,monospace; }
+  .seg { display:flex; background:#e3e3e8; border-radius:9px; padding:2px; margin:10px 0; }
+  .seg button { flex:1; border:0; background:none; padding:7px; border-radius:7px; font-size:14px; cursor:pointer; }
+  .seg button.on { background:#fff; font-weight:600; }
+  .qr { width:220px; height:220px; margin:10px auto; display:grid; grid-template-columns:repeat(21,1fr); background:#fff; padding:10px; border-radius:12px; }
+  .qr i { display:block; }
+  .alert { background:#fff4e5; border-radius:12px; padding:12px; margin:10px 0; font-size:14px; }
+  .alert.red { background:#ffe8e6; }
+  .month { font-size:13px; font-weight:600; color:var(--muted); margin:16px 4px 6px; }
+  .tl { display:flex; gap:12px; background:#fff; border-radius:14px; padding:12px; margin-bottom:8px; cursor:pointer; }
+  .tl .dot { width:38px; height:38px; flex:none; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; background:var(--soft); }
+  table.inv { width:100%; border-collapse:collapse; background:#fff; border-radius:14px; overflow:hidden; }
+  table.inv td { padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  table.inv input { padding:7px 8px; font-size:15px; }
+  .proto-bar { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:#ff2d92; color:#fff; border-radius:999px; display:flex; align-items:center; gap:4px; padding:6px; font:600 13px system-ui; box-shadow:0 8px 24px rgba(0,0,0,.3); z-index:100; }
+  .proto-bar button { background:rgba(255,255,255,.2); color:#fff; border:0; border-radius:999px; width:32px; height:32px; font-size:16px; cursor:pointer; }
+  .proto-bar span { padding:0 10px; white-space:nowrap; }
+  .toast { position:absolute; left:16px; right:16px; bottom:100px; background:#111; color:#fff; padding:12px 14px; border-radius:12px; z-index:20; font-size:14px; }
+</style>
+</head>
+<body>
+<div class="phone"><div class="status"><span>9:41</span><span>●●● 􀙇 100%</span></div><div id="app" style="flex:1;display:flex;flex-direction:column;min-height:0;position:relative"></div></div>
+<div class="proto-bar"><button data-proto="prev">←</button><span id="proto-label"></span><button data-proto="next">→</button></div>
+<script>
+/* ---------- mock data (in memory) ---------- */
+const CATALOG = [
+  { cat:'Routine Maintenance', items:['Oil & filter change','Tire rotation','Engine air filter','Cabin air filter','Scheduled maintenance','Wiper blades'] },
+  { cat:'Brakes', items:['Brake pads (front)','Brake pads (rear)','Brake fluid flush','Rotor replacement'] },
+  { cat:'Tires & Wheels', items:['New tires','Wheel alignment','Tire balance','Flat repair'] },
+  { cat:'Electrical & Battery', items:['Battery replacement','Battery test','Alternator replacement'] },
+  { cat:'Body & Paint', items:['Paint correction','Dent repair','Bumper repair'] },
+  { cat:'Detailing & Appearance', items:['Car wash','Interior detailing','Full detailing','Ceramic coating'] },
+  { cat:'Inspections & Registration', items:['State inspection','Emissions test','Registration renewal'] },
+];
+const COMMON = ['Oil & filter change','Tire rotation','Brake pads (front)','Battery replacement','New tires','Full detailing','State inspection','Wiper blades'];
+const catOf = s => (CATALOG.find(c => c.items.includes(s)) || { cat:'Other' }).cat;
+const ICON = { 'Routine Maintenance':'🛢', 'Brakes':'🛑', 'Tires & Wheels':'🛞', 'Electrical & Battery':'🔋', 'Body & Paint':'🎨', 'Detailing & Appearance':'✨', 'Inspections & Registration':'📋', 'Other':'🔧' };
+
+let S = {
+  vehicles: [
+    { id:'v1', nickname:'Daily', make:'Honda', model:'Civic', year:2019, trim:'EX', vin:'2HGFC2F69KH512345', plate:'7ABC123 · CA', color:'Blue', initialOdo:41200, createdAt:'2026-03-02', details:{ 'Body class':'Sedan', 'Fuel':'Gasoline', 'Cylinders':'4', 'Displacement':'2.0 L', 'Drive':'FWD' } },
+    { id:'v2', nickname:'', make:'Toyota', model:'RAV4', year:2022, trim:'XLE Hybrid', vin:'', plate:'', color:'White', initialOdo:18000, createdAt:'2026-05-10', details:{ 'Fuel':'Hybrid' } },
+  ],
+  records: [
+    { id:'r1', vehicleId:'v1', date:'2025-11-14', odo:38900, provider:'Honda of Downtown', providerType:'Dealer', total:18950, notes:'', lines:[{ service:'Scheduled maintenance', cost:null, notes:'Maintenance Minder A1' },{ service:'Tire rotation', cost:null, notes:'' }] },
+    { id:'r2', vehicleId:'v1', date:'2026-04-20', odo:43010, provider:'Discount Tire', providerType:'Chain', total:78400, notes:'', lines:[{ service:'New tires', cost:72000, notes:'4× Michelin CrossClimate 2' },{ service:'Wheel alignment', cost:6400, notes:'' }] },
+    { id:'r3', vehicleId:'v1', date:'2026-09-05', odo:47750, provider:'', providerType:'DIY', total:4200, notes:'', lines:[{ service:'Engine air filter', cost:2100, notes:'' },{ service:'Cabin air filter', cost:2100, notes:'' }] },
+    { id:'r4', vehicleId:'v2', date:'2026-08-12', odo:22500, provider:'Sparkle Detail Co.', providerType:'Independent shop', total:25000, notes:'', lines:[{ service:'Full detailing', cost:25000, notes:'' }] },
+  ],
+  route: { name:'home' }, stack: [], sheet:null, toast:null,
+  selected:'v1', filter:'all', year:'all', draft:null, add:null, scan:null, transfer:null,
+};
+
+/* ---------- helpers ---------- */
+const money = c => '$' + (c/100).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+const miles = n => n == null ? '—' : n.toLocaleString('en-US') + ' mi';
+const fmtDate = d => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'numeric' });
+const monthOf = d => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month:'long', year:'numeric' });
+const veh = id => S.vehicles.find(v => v.id === id);
+const vname = v => v.nickname ? v.nickname + ' · ' + v.year + ' ' + v.make + ' ' + v.model : v.year + ' ' + v.make + ' ' + v.model;
+const recsOf = id => S.records.filter(r => r.vehicleId === id).sort((a,b) => b.date.localeCompare(a.date));
+const curMiles = v => Math.max(v.initialOdo, ...recsOf(v.id).map(r => r.odo || 0));
+const thisYear = '2026';
+const spend = (id, year) => recsOf(id).filter(r => year === 'all' || r.date.startsWith(year)).reduce((s,r) => s + r.total, 0);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+
+/* VIN validation (same rules as ADR-0003) */
+const TR = { A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8,J:1,K:2,L:3,M:4,N:5,P:7,R:9,S:2,T:3,U:4,V:5,W:6,X:7,Y:8,Z:9 };
+const W = [8,7,6,5,4,3,2,10,0,9,8,7,6,5,4,3,2];
+function validateVin(raw) {
+  const v = raw.replace(/[\s-]/g,'').toUpperCase();
+  if (!v) return { v, state:'empty' };
+  if (/[IOQ]/.test(v)) return { v, state:'bad', msg:'VINs never contain I, O or Q.' };
+  if (!/^[A-Z0-9]*$/.test(v)) return { v, state:'bad', msg:'Only letters and digits.' };
+  if (v.length < 17) return { v, state:'typing', msg:(17 - v.length) + ' characters to go' };
+  if (v.length > 17) return { v, state:'bad', msg:'A VIN has exactly 17 characters.' };
+  const sum = [...v].reduce((s,ch,i) => s + (/\d/.test(ch) ? +ch : TR[ch]) * W[i], 0);
+  const check = sum % 11 === 10 ? 'X' : String(sum % 11);
+  if (v[8] !== check) return { v, state:'bad', msg:'Check digit doesn’t match — a character is probably mistyped.' };
+  return { v, state:'ok' };
+}
+function decode(vin) {
+  if (vin.startsWith('1HG')) return { make:'Honda', model:'Accord', year:2003, trim:'EX', details:{ 'Body class':'Sedan', 'Fuel':'Gasoline', 'Cylinders':'4', 'Displacement':'2.4 L', 'Drive':'FWD' } };
+  return { make:'Ford', model:'F-150', year:2021, trim:'XLT', details:{ 'Body class':'Pickup', 'Fuel':'Gasoline', 'Cylinders':'6', 'Displacement':'3.5 L', 'Drive':'4WD' } };
+}
+
+/* Odometer consistency by date (ADR-0007) */
+function odoCheck(vehicleId, date, odo, ignoreId) {
+  if (odo === '' || odo == null || isNaN(odo)) return null;
+  const v = veh(vehicleId);
+  const readings = [{ date:v.createdAt, odo:v.initialOdo, label:'initial odometer' }]
+    .concat(S.records.filter(r => r.vehicleId === vehicleId && r.id !== ignoreId && r.odo != null).map(r => ({ date:r.date, odo:r.odo, label:'record on ' + fmtDate(r.date) })));
+  const before = readings.filter(r => r.date <= date).sort((a,b) => b.odo - a.odo)[0];
+  const after = readings.filter(r => r.date > date).sort((a,b) => a.odo - b.odo)[0];
+  if (before && odo < before.odo) return 'Must be at least ' + miles(before.odo) + ' (' + before.label + ').';
+  if (after && odo > after.odo) return 'Must be at most ' + miles(after.odo) + ' (' + after.label + ').';
+  if (odo > 9999999) return 'Odometer looks too high.';
+  return null;
+}
+
+/* ---------- navigation ---------- */
+const variant = () => new URLSearchParams(location.search).get('variant') || 'A';
+const VARIANTS = { A:'Tabs + garage cards', B:'Vehicle switcher + wizard', C:'Timeline-first + invoice form' };
+function go(name, params) { S.stack.push(S.route); S.route = { name, ...params }; S.sheet = null; render(); }
+function back() { S.route = S.stack.pop() || { name:'home' }; render(); }
+function home() { S.stack = []; S.route = { name:'home' }; S.sheet = null; render(); }
+function toast(msg) { S.toast = msg; render(); setTimeout(() => { S.toast = null; render(); }, 1800); }
+function navbar(title, right) { return `<div class="nav"><button data-a="back">‹ Back</button><span class="title">${esc(title)}</span><span style="min-width:50px;text-align:right">${right || ''}</span></div>`; }
+
+/* ---------- shared screens ---------- */
+function vehicleHeader(v) {
+  return `<div class="card"><div class="muted">${esc(v.nickname || 'Vehicle')}</div><div class="big">${v.year} ${esc(v.make)} ${esc(v.model)}</div>
+  <div class="muted">${esc(v.trim || '')} ${v.plate ? '· ' + esc(v.plate) : ''}</div>
+  <div class="inline" style="margin-top:10px"><div><div class="muted">Current mileage</div><b>${miles(curMiles(v))}</b></div><div><div class="muted">Spent in ${thisYear}</div><b>${money(spend(v.id, thisYear))}</b></div></div></div>`;
+}
+function reports(v) {
+  const years = ['all', ...new Set(recsOf(v.id).map(r => r.date.slice(0,4)))];
+  const rs = recsOf(v.id).filter(r => S.year === 'all' || r.date.startsWith(S.year));
+  const byCat = {};
+  rs.forEach(r => {
+    const costed = r.lines.filter(l => l.cost != null);
+    const rest = r.total - costed.reduce((s,l) => s + l.cost, 0);
+    costed.forEach(l => byCat[catOf(l.service)] = (byCat[catOf(l.service)] || 0) + l.cost);
+    if (rest > 0) { const c = catOf(r.lines[0].service); byCat[c] = (byCat[c] || 0) + rest; }
+  });
+  const total = rs.reduce((s,r) => s + r.total, 0);
+  const max = Math.max(1, ...Object.values(byCat));
+  return `<h3>Spending</h3><div>${years.map(y => `<span class="chip ${S.year === y ? 'on' : ''}" data-a="year" data-v="${y}">${y === 'all' ? 'All time' : y}</span>`).join('')}</div>
+  <div class="card"><div class="muted">${S.year === 'all' ? 'Lifetime total' : 'Total ' + S.year}</div><div class="big">${money(total)}</div>
+  ${Object.entries(byCat).sort((a,b) => b[1]-a[1]).map(([c,amt]) => `<div style="margin-top:10px"><div class="inline"><span>${ICON[c]} ${c}</span><span style="text-align:right">${money(amt)}</span></div><div class="bar"><i style="width:${amt/max*100}%"></i></div></div>`).join('') || '<div class="muted">No records yet.</div>'}</div>`;
+}
+function recordRow(r, showCar) {
+  const v = veh(r.vehicleId);
+  return `<div class="row" data-a="record" data-id="${r.id}"><div><div><b>${esc(r.lines.map(l => l.service).join(', '))}</b></div>
+  <div class="muted">${fmtDate(r.date)} · ${miles(r.odo)}${r.provider ? ' · ' + esc(r.provider) : r.providerType === 'DIY' ? ' · DIY' : ''}${showCar ? ' · ' + esc(v.nickname || v.model) : ''}</div></div><b>${money(r.total)}</b></div>`;
+}
+function recordDetail() {
+  const r = S.records.find(x => x.id === S.route.id); if (!r) return home();
+  const v = veh(r.vehicleId);
+  return navbar('Record', '<button data-a="editRecord" style="background:none;border:0;color:var(--accent);font-size:16px">Edit</button>') + `
+  <div class="card"><div class="muted">${esc(vname(v))}</div><div class="big">${money(r.total)}</div><div class="muted">${fmtDate(r.date)} · ${miles(r.odo)}</div>
+  <div class="muted">${esc(r.provider || '')}${r.providerType ? ' (' + r.providerType + ')' : ''}</div></div>
+  <h3>Services</h3><div class="list">${r.lines.map(l => `<div class="row"><div>${ICON[catOf(l.service)]} ${esc(l.service)}${l.notes ? `<div class="muted">${esc(l.notes)}</div>` : ''}</div><span>${l.cost != null ? money(l.cost) : '<span class="muted">—</span>'}</span></div>`).join('')}</div>
+  ${r.notes ? `<div class="card">${esc(r.notes)}</div>` : ''}
+  <button class="btn danger" data-a="deleteRecord">Delete record</button>`;
+}
+function vehicleInfo() {
+  const v = veh(S.route.id);
+  const n = recsOf(v.id).length;
+  return navbar('Vehicle details') + `<div class="list">
+   ${[['Nickname',v.nickname],['Make',v.make],['Model',v.model],['Year',v.year],['Trim',v.trim],['VIN',v.vin || 'Not provided'],['Plate',v.plate],['Color',v.color],['Initial odometer',miles(v.initialOdo) + ' on ' + fmtDate(v.createdAt)],...Object.entries(v.details)].map(([k,val]) => `<div class="row"><span class="muted">${k}</span><span>${esc(val || '—')}</span></div>`).join('')}</div>
+   <p class="muted" style="margin:0 4px">All details are editable (not wired in this prototype).</p>
+   <button class="btn danger" data-a="deleteVehicle">Delete vehicle (${n} record${n === 1 ? '' : 's'} will be lost)</button>`;
+}
+
+/* add vehicle flow */
+function addVehicle() {
+  const a = S.add;
+  if (a.step === 'vin') {
+    const r = validateVin(a.vin);
+    return navbar('Add vehicle') + `<h1>Add vehicle</h1>
+    <label>VIN</label><div class="inline"><input id="vin" value="${esc(a.vin)}" placeholder="17 characters" autocapitalize="characters" style="font-family:ui-monospace,monospace;flex:3"><button class="btn secondary" style="margin:0;flex:1" data-a="scanVin">📷 Scan</button></div>
+    ${r.state === 'bad' ? `<div class="err">${r.msg}</div>` : r.state === 'ok' ? '<div class="okmsg">✓ Valid VIN</div>' : r.msg ? `<div class="muted" style="margin:4px">${r.msg}</div>` : ''}
+    <p class="muted" style="margin:8px 4px">Find it on the driver-side windshield or the door-jamb sticker. Try <code>1HGCM82633A004352</code>.</p>
+    <button class="btn" data-a="decode" ${r.state === 'ok' ? '' : 'disabled'}>Look up vehicle</button>
+    <button class="btn secondary" data-a="manual">Add without VIN</button>`;
+  }
+  const f = a.form;
+  const odoErr = a.tried && (f.initialOdo === '' ? 'Required — enter or scan the current odometer.' : null);
+  return navbar(a.step === 'review' ? 'Confirm details' : 'Add without VIN') + `
+   ${a.step === 'review' ? `<div class="card"><div class="okmsg" style="margin:0">✓ Decoded from VIN ${esc(f.vin)}</div><div class="muted">Review and edit anything before saving.</div></div>` : ''}
+   <div class="inline"><div><label>Year *</label><input data-f="year" value="${esc(f.year)}" inputmode="numeric"></div><div><label>Make *</label><input data-f="make" value="${esc(f.make)}"></div></div>
+   <label>Model *</label><input data-f="model" value="${esc(f.model)}">
+   <label>Trim</label><input data-f="trim" value="${esc(f.trim)}">
+   ${Object.keys(f.details).length ? `<h3>Decoded details</h3><div class="list">${Object.entries(f.details).map(([k,v]) => `<div class="row"><span class="muted">${k}</span><span>${esc(v)}</span></div>`).join('')}</div>` : ''}
+   <label>Current odometer *</label><div class="inline"><input data-f="initialOdo" value="${esc(f.initialOdo)}" inputmode="numeric" placeholder="miles" style="flex:3"><button class="btn secondary" style="margin:0;flex:1" data-a="scanOdo">📷 Scan</button></div>
+   ${odoErr ? `<div class="err">${odoErr}</div>` : ''}
+   <label>Nickname</label><input data-f="nickname" value="${esc(f.nickname)}" placeholder="e.g. Daily">
+   <div class="inline"><div><label>Plate</label><input data-f="plate" value="${esc(f.plate)}"></div><div><label>Color</label><input data-f="color" value="${esc(f.color)}"></div></div>
+   <button class="btn" data-a="saveVehicle">Save vehicle</button>`;
+}
+
+/* scanner (VIN / Odometer / QR) — one screen, three modes */
+function scanner() {
+  const sc = S.scan;
+  const hints = { vin:'Point at the windshield VIN plate or the door-jamb barcode', odo:'Fit the odometer inside the frame — TRIP is ignored', qr:'Scan the QR shown on your old phone' };
+  const lockText = { vin:'1HGCM82633A004352', odo:'47,980 mi', qr:'Transfer code found' };
+  return navbar('Scan') + `<div class="seg">${['vin','odo','qr'].map(m => `<button class="${sc.mode === m ? 'on' : ''}" data-a="scanMode" data-v="${m}">${{ vin:'VIN', odo:'Odometer', qr:'Transfer QR' }[m]}</button>`).join('')}</div>
+   <div class="scanner"><div class="guide ${sc.mode === 'qr' ? 'qr' : sc.mode === 'odo' ? 'odo' : ''} ${sc.locked ? 'locked' : ''}"></div>
+   <div class="scan-read">${sc.locked ? '✓ ' + lockText[sc.mode] : 'Scanning…'}</div><div class="scan-hint">${hints[sc.mode]}</div></div>
+   ${sc.mode !== 'qr' ? '<div class="inline" style="margin-top:8px"><button class="btn secondary" data-a="torch">🔦 Torch</button><button class="btn secondary" data-a="shutter">◉ Take photo</button></div>' : ''}
+   ${sc.locked ? `<button class="btn" data-a="useScan">${sc.mode === 'qr' ? 'Continue' : 'Use this value'}</button>` : '<p class="muted" style="text-align:center">Prototype: a read locks after ~1.5 s</p>'}
+   ${sc.mode !== 'qr' ? '<button class="btn secondary" data-a="back">Type it instead</button>' : ''}`;
+}
+
+/* settings + transfer */
+function settings() {
+  return (variant() === 'A' ? '<h1>Settings</h1>' : navbar('Settings')) + `<div class="list">
+  <div class="row" data-a="transferOut"><span>📤 Transfer to another phone</span><span class="muted">›</span></div>
+  <div class="row" data-a="transferIn"><span>📥 Receive from another phone</span><span class="muted">›</span></div></div>
+  <p class="muted" style="margin:6px 4px">Your data is tied to this phone. There is no account — use transfer when you change phones.</p>`;
+}
+function transferOut() {
+  const cells = Array.from({ length:441 }, (_, i) => { const x = i % 21, y = Math.floor(i / 21); const finder = (x < 7 && y < 7) || (x > 13 && y < 7) || (x < 7 && y > 13); const fv = finder ? ((x % 14 === 0 || x % 14 === 6 || y % 14 === 0 || y % 14 === 6 || (x % 14 > 1 && x % 14 < 5 && y % 14 > 1 && y % 14 < 5))) : ((x * 7 + y * 13 + x * y) % 3 === 0); return `<i style="background:${fv ? '#111' : '#fff'}"></i>`; }).join('');
+  return navbar('Transfer') + `<h2 style="text-align:center">Scan this on your new phone</h2><div class="qr">${cells}</div>
+  <p style="text-align:center" class="muted">Code expires in <b>9:41</b> · single use</p>
+  <div class="alert">After the new phone scans it, <b>this phone loses access</b> and starts with an empty garage.</div>
+  <button class="btn secondary" data-a="newCode">Generate a new code</button>`;
+}
+function transferIn() {
+  const t = S.transfer;
+  if (t && t.step === 'confirm') return navbar('Receive data') + `<div class="alert red"><b>This phone already has ${S.vehicles.length} vehicle${S.vehicles.length === 1 ? '' : 's'}.</b><br>Transferring will delete them and replace them with the data from your other phone.</div>
+   <button class="btn" data-a="confirmTransfer">Replace and transfer</button><button class="btn secondary" data-a="back">Cancel</button>`;
+  return navbar('Receive data') + `<p>On your old phone open <b>Settings → Transfer to another phone</b>, then scan its QR.</p><button class="btn" data-a="scanQr">📷 Scan QR</button>`;
+}
+
+/* ---------- log work forms (variant-specific) ---------- */
+function newDraft(vehicleId) { return { id:null, vehicleId, date:'2026-10-26', odo:'', provider:'', providerType:'', total:'', notes:'', lines:[], step:0, tried:false, pickerOpen:false, q:'' }; }
+function draftErrors(d) {
+  const e = {};
+  if (!d.lines.length) e.lines = 'Add at least one service.';
+  if (d.total === '') e.total = 'Enter what you paid ($0 is fine for DIY or warranty).';
+  if (d.date > '2026-10-26') e.date = 'Date can’t be in the future.';
+  const oe = odoCheck(d.vehicleId, d.date, d.odo === '' ? null : +d.odo, d.id); if (oe) e.odo = oe;
+  return e;
+}
+function picker(d) {
+  const q = d.q.toLowerCase();
+  const matches = q ? CATALOG.flatMap(c => c.items.filter(i => i.toLowerCase().includes(q))) : [];
+  return `<div class="sheet-bg" data-a="closePicker"><div class="sheet" data-stop="1"><div class="grab"></div><h2 style="margin-top:0">Add service</h2>
+   <input id="q" value="${esc(d.q)}" placeholder="Search 117 services…">
+   ${q ? `<div class="list" style="margin-top:8px">${matches.map(i => `<div class="row" data-a="pick" data-v="${esc(i)}">${ICON[catOf(i)]} ${esc(i)}</div>`).join('')}<div class="row" data-a="pick" data-v="${esc(d.q)}">✏️ Custom: “${esc(d.q)}”</div></div>`
+     : `<h3>Common</h3><div>${COMMON.map(i => `<span class="chip" data-a="pick" data-v="${esc(i)}">${esc(i)}</span>`).join('')}</div>
+        <h3>Categories</h3><div class="list">${CATALOG.map(c => `<div class="row"><span>${ICON[c.cat]} ${c.cat}</span><span class="muted">${c.items.length} ›</span></div>`).join('')}</div>`}
+  </div></div>`;
+}
+function vehicleSelect(d) { return `<label>Vehicle</label><select data-d="vehicleId">${S.vehicles.map(v => `<option value="${v.id}" ${v.id === d.vehicleId ? 'selected' : ''}>${esc(vname(v))}</option>`).join('')}</select>`; }
+function basics(d, e) {
+  return `<div class="inline"><div><label>Date *</label><input type="date" data-d="date" value="${d.date}"></div>
+   <div><label>Odometer</label><div class="inline"><input data-d="odo" value="${esc(d.odo)}" inputmode="numeric" placeholder="mi"><button class="btn secondary" style="margin:0;flex:0 0 44px;padding:10px" data-a="scanOdoDraft">📷</button></div></div></div>
+   ${e.odo && (d.tried || d.odo !== '') ? `<div class="err">${e.odo}</div>` : `<div class="muted" style="margin:4px">Current: ${miles(curMiles(veh(d.vehicleId)))}</div>`}`;
+}
+function providerFields(d) {
+  return `<label>Where</label><input data-d="provider" value="${esc(d.provider)}" placeholder="Shop name (optional)">
+   <div style="margin-top:8px">${['Dealer','Chain','Independent shop','DIY'].map(t => `<span class="chip ${d.providerType === t ? 'on' : ''}" data-a="ptype" data-v="${t}">${t}</span>`).join('')}</div>`;
+}
+function logFormA(d) { // single scroll form
+  const e = draftErrors(d);
+  return navbar(d.id ? 'Edit record' : 'Log work') + vehicleSelect(d) + basics(d, e) + `
+   <h3>Services *</h3><div class="list">${d.lines.map((l,i) => `<div class="row"><span>${ICON[catOf(l.service)]} ${esc(l.service)}</span><span class="muted" data-a="rmLine" data-i="${i}">✕</span></div>`).join('')}<div class="row" data-a="openPicker" style="color:var(--accent)">＋ Add service</div></div>
+   ${d.tried && e.lines ? `<div class="err">${e.lines}</div>` : ''}
+   <label>Total paid *</label><input data-d="total" value="${esc(d.total)}" inputmode="decimal" placeholder="$0.00">${d.tried && e.total ? `<div class="err">${e.total}</div>` : ''}
+   ${providerFields(d)}<label>Notes</label><textarea data-d="notes" rows="2">${esc(d.notes)}</textarea>
+   <button class="btn" data-a="saveRecord">Save</button>${d.pickerOpen ? picker(d) : ''}`;
+}
+function logFormB(d) { // 3-step wizard
+  const e = draftErrors(d);
+  const steps = `<div class="steps">${[0,1,2].map(i => `<i class="${i <= d.step ? 'on' : ''}"></i>`).join('')}</div>`;
+  let body = '';
+  if (d.step === 0) body = `<h1>What was done?</h1><div>${COMMON.map(i => `<span class="chip ${d.lines.some(l => l.service === i) ? 'on' : ''}" data-a="toggleLine" data-v="${esc(i)}">${esc(i)}</span>`).join('')}</div>
+     <button class="btn secondary" data-a="openPicker">Search all services or add custom…</button>
+     ${d.lines.filter(l => !COMMON.includes(l.service)).map(l => `<span class="chip on">${esc(l.service)}</span>`).join('')}
+     ${d.tried && e.lines ? `<div class="err">${e.lines}</div>` : ''}<button class="btn" data-a="next">Next</button>`;
+  if (d.step === 1) body = `<h1>When & where?</h1>${basics(d, e)}${providerFields(d)}<button class="btn" data-a="next">Next</button>`;
+  if (d.step === 2) body = `<h1>What did it cost?</h1><label>Total paid *</label><input data-d="total" value="${esc(d.total)}" inputmode="decimal" placeholder="$0.00" style="font-size:28px;font-weight:700">
+     ${d.tried && e.total ? `<div class="err">${e.total}</div>` : ''}<p class="muted" style="margin:6px 4px">Optional: split by service</p>
+     <div class="list">${d.lines.map((l,i) => `<div class="row"><span>${esc(l.service)}</span><input data-line="${i}" value="${l.cost ?? ''}" placeholder="—" style="width:100px;flex:none"></div>`).join('')}</div>
+     <label>Notes</label><textarea data-d="notes" rows="2">${esc(d.notes)}</textarea><button class="btn" data-a="saveRecord">Save record</button>`;
+  return `<div class="nav"><button data-a="${d.step ? 'prev' : 'back'}">‹ ${d.step ? 'Back' : 'Cancel'}</button><span class="title">${esc(vname(veh(d.vehicleId)))}</span><span></span></div>${steps}${body}${d.pickerOpen ? picker(d) : ''}`;
+}
+function logFormC(d) { // invoice style
+  const e = draftErrors(d);
+  const linesSum = d.lines.reduce((s,l) => s + (l.cost ? +l.cost : 0), 0);
+  return navbar(d.id ? 'Edit record' : 'New invoice') + vehicleSelect(d) + basics(d, e) + providerFields(d) + `
+   <h3>Line items *</h3><table class="inv">${d.lines.map((l,i) => `<tr><td>${ICON[catOf(l.service)]} ${esc(l.service)}<input data-lnote="${i}" value="${esc(l.notes)}" placeholder="notes (axle, oil type…)" style="margin-top:4px;font-size:13px"></td><td style="width:96px"><input data-line="${i}" value="${l.cost ?? ''}" placeholder="$" inputmode="decimal"></td><td style="width:24px" data-a="rmLine" data-i="${i}">✕</td></tr>`).join('')}
+   <tr><td colspan="3" data-a="openPicker" style="color:var(--accent);cursor:pointer">＋ Add line</td></tr></table>
+   ${d.tried && e.lines ? `<div class="err">${e.lines}</div>` : ''}
+   <div class="card" style="margin-top:10px"><div class="inline"><span class="muted">Lines subtotal</span><span style="text-align:right">$${linesSum.toFixed(2)}</span></div>
+   <label>Total paid (incl. tax, fees) *</label><input data-d="total" value="${esc(d.total)}" inputmode="decimal" placeholder="$0.00">
+   ${d.total !== '' && linesSum > +d.total ? '<div class="err">Lines add up to more than the total.</div>' : ''}${d.tried && e.total ? `<div class="err">${e.total}</div>` : ''}</div>
+   <label>Notes</label><textarea data-d="notes" rows="2">${esc(d.notes)}</textarea><button class="btn" data-a="saveRecord">Save</button>${d.pickerOpen ? picker(d) : ''}`;
+}
+
+/* ---------- variant homes ---------- */
+function homeA() {
+  if (S.tab === 'settings') return settings();
+  return `<div class="nav"><span></span><button data-a="addVehicle">＋ Add</button></div><h1>Garage</h1>` + S.vehicles.map(v => `<div class="card" data-a="vehicle" data-id="${v.id}" style="cursor:pointer">
+    <div class="inline"><div style="flex:3"><div class="muted">${esc(v.nickname || '')}</div><b style="font-size:18px">${v.year} ${esc(v.make)} ${esc(v.model)}</b><div class="muted">${miles(curMiles(v))} · ${recsOf(v.id).length} records</div></div>
+    <div style="text-align:right"><div class="muted">${thisYear}</div><b>${money(spend(v.id, thisYear))}</b></div></div></div>`).join('') + `<p class="muted" style="text-align:center">${S.vehicles.length}/20 vehicles</p>`;
+}
+function vehicleA() {
+  const v = veh(S.route.id); if (!v) return home();
+  return navbar('', '<button data-a="vinfo" style="background:none;border:0;color:var(--accent);font-size:16px">Details</button>') + vehicleHeader(v) + `<button class="btn" data-a="logWork" data-id="${v.id}">＋ Log work</button>` + reports(v) +
+    `<h3>Log</h3><div class="list">${recsOf(v.id).map(r => recordRow(r)).join('') || '<div class="row muted">Nothing logged yet.</div>'}</div>`;
+}
+function homeB() {
+  if (!S.vehicles.length) return `<h1>Welcome</h1><button class="btn" data-a="addVehicle">Add your first vehicle</button><button class="btn secondary" data-a="transferIn">I have data on another phone</button>`;
+  const v = veh(S.selected) || S.vehicles[0];
+  return `<div class="nav"><h1 style="margin:0">My cars</h1><button data-a="settings">⚙︎</button></div>
+   <div class="carousel">${S.vehicles.map(x => `<div class="car-tile ${x.id === v.id ? 'on' : ''}" data-a="select" data-id="${x.id}"><div class="muted">${esc(x.nickname || x.make)}</div><b>${x.year} ${esc(x.model)}</b><div class="muted">${miles(curMiles(x))}</div></div>`).join('')}
+   <div class="car-tile" data-a="addVehicle" style="display:flex;align-items:center;justify-content:center;color:var(--accent)">＋ Add</div></div>
+   ${vehicleHeader(v)}<div class="row" data-a="vinfo" data-id="${v.id}" style="background:#fff;border-radius:12px;margin-bottom:6px"><span>Vehicle details & VIN</span><span class="muted">›</span></div>
+   ${reports(v)}<h3>History</h3><div class="list">${recsOf(v.id).map(r => recordRow(r)).join('') || '<div class="row muted">Nothing logged yet.</div>'}</div><div style="height:70px"></div>`;
+}
+function homeC() {
+  const rs = S.records.filter(r => S.filter === 'all' || r.vehicleId === S.filter).sort((a,b) => b.date.localeCompare(a.date));
+  let month = '';
+  const total = rs.filter(r => r.date.startsWith(thisYear)).reduce((s,r) => s + r.total, 0);
+  return `<div class="nav"><button data-a="garageSheet">🚗 Garage</button><button data-a="settings">⚙︎</button></div><h1>Activity</h1>
+   <div class="card inline"><div><div class="muted">Spent in ${thisYear}</div><div class="big">${money(total)}</div></div><div style="text-align:right"><div class="muted">Records</div><div class="big">${rs.length}</div></div></div>
+   <div><span class="chip ${S.filter === 'all' ? 'on' : ''}" data-a="filter" data-v="all">All cars</span>${S.vehicles.map(v => `<span class="chip ${S.filter === v.id ? 'on' : ''}" data-a="filter" data-v="${v.id}">${esc(v.nickname || v.model)}</span>`).join('')}</div>
+   ${rs.map(r => { const m = monthOf(r.date); const head = m !== month ? `<div class="month">${m}</div>` : ''; month = m; const v = veh(r.vehicleId);
+     return head + `<div class="tl" data-a="record" data-id="${r.id}"><div class="dot">${ICON[catOf(r.lines[0].service)]}</div><div style="flex:1"><b>${esc(r.lines.map(l => l.service).join(', '))}</b><div class="muted">${esc(v.nickname || v.model)} · ${fmtDate(r.date)} · ${miles(r.odo)}</div></div><b>${money(r.total)}</b></div>`; }).join('') || '<p class="muted">Nothing logged yet.</p>'}
+   <div style="height:70px"></div>` + (S.sheet === 'garage' ? `<div class="sheet-bg" data-a="closeSheet"><div class="sheet" data-stop="1"><div class="grab"></div><h2 style="margin-top:0">Garage</h2>
+     <div class="list">${S.vehicles.map(v => `<div class="row" data-a="vehicle" data-id="${v.id}"><div><b>${esc(vname(v))}</b><div class="muted">${miles(curMiles(v))}</div></div><span>${money(spend(v.id, thisYear))}</span></div>`).join('')}</div>
+     <button class="btn" data-a="addVehicle">＋ Add vehicle</button></div></div>` : '');
+}
+
+/* ---------- render ---------- */
+function render() {
+  const app = document.getElementById('app');
+  const V = variant(); const r = S.route;
+  document.getElementById('proto-label').textContent = V + ' — ' + VARIANTS[V];
+  let html = '';
+  if (r.name === 'home') html = V === 'A' ? homeA() : V === 'B' ? homeB() : homeC();
+  else if (r.name === 'vehicle') html = V === 'B' ? (S.selected = r.id, S.route = { name:'home' }, homeB()) : vehicleA();
+  else if (r.name === 'record') html = recordDetail();
+  else if (r.name === 'vinfo') html = vehicleInfo();
+  else if (r.name === 'add') html = addVehicle();
+  else if (r.name === 'scan') html = scanner();
+  else if (r.name === 'settings') html = settings();
+  else if (r.name === 'transferOut') html = transferOut();
+  else if (r.name === 'transferIn') html = transferIn();
+  else if (r.name === 'log') html = V === 'A' ? logFormA(S.draft) : V === 'B' ? logFormB(S.draft) : logFormC(S.draft);
+  const showTabs = V === 'A' && r.name === 'home';
+  const fab = (V === 'B' || V === 'C') && r.name === 'home' && S.vehicles.length ? '<button class="fab" data-a="fab">＋</button>' : '';
+  const sheetB = S.sheet === 'actions' ? `<div class="sheet-bg" data-a="closeSheet"><div class="sheet" data-stop="1"><div class="grab"></div>
+    <button class="btn" data-a="logWork" data-id="${S.selected}">🔧 Log work</button><button class="btn secondary" data-a="addVehicle">🚗 Add vehicle</button><button class="btn secondary" data-a="transferOut">📤 Transfer to another phone</button></div></div>` : '';
+  const focused = document.activeElement && document.activeElement.id ? document.activeElement.id : document.activeElement && document.activeElement.dataset && (document.activeElement.dataset.d || document.activeElement.dataset.f);
+  app.innerHTML = `<div class="screen">${html}</div>${fab}${sheetB}${showTabs ? `<div class="tabs"><button class="${S.tab !== 'settings' ? 'on' : ''}" data-a="tab" data-v="garage"><span class="ico">🚗</span>Garage</button><button class="${S.tab === 'settings' ? 'on' : ''}" data-a="tab" data-v="settings"><span class="ico">⚙︎</span>Settings</button></div>` : ''}${S.toast ? `<div class="toast">${esc(S.toast)}</div>` : ''}`;
+  if (focused) { const el = app.querySelector('#' + focused) || app.querySelector(`[data-d="${focused}"],[data-f="${focused}"]`); if (el) { el.focus(); const n = el.value.length; try { el.setSelectionRange(n, n); } catch (_) {} } }
+}
+
+/* ---------- events ---------- */
+function startScan(mode, onDone) { S.scan = { mode, locked:false, onDone }; go('scan'); setTimeout(() => { if (S.scan && S.route.name === 'scan') { S.scan.locked = true; render(); } }, 1500); }
+document.addEventListener('click', ev => {
+  const p = ev.target.closest('[data-proto]');
+  if (p) { const keys = Object.keys(VARIANTS); const i = keys.indexOf(variant()); const n = keys[(i + (p.dataset.proto === 'next' ? 1 : keys.length - 1)) % keys.length]; history.replaceState(null, '', '?variant=' + n); home(); return; }
+  const el = ev.target.closest('[data-a]'); if (!el) return;
+  if (el.dataset.a.match(/^close/) && ev.target.closest('[data-stop]')) return;
+  const a = el.dataset.a, id = el.dataset.id, v = el.dataset.v, d = S.draft;
+  const act = {
+    back, tab: () => { S.tab = v; render(); }, settings: () => go('settings'),
+    vehicle: () => go('vehicle', { id }), record: () => go('record', { id }), vinfo: () => go('vinfo', { id: id || S.route.id || S.selected }),
+    select: () => { S.selected = id; S.year = 'all'; render(); }, year: () => { S.year = v; render(); }, filter: () => { S.filter = v; render(); },
+    fab: () => { if (variant() === 'B') { S.sheet = 'actions'; render(); } else { S.draft = newDraft(S.filter !== 'all' ? S.filter : S.vehicles[0].id); go('log'); } },
+    closeSheet: () => { S.sheet = null; render(); }, garageSheet: () => { S.sheet = 'garage'; render(); },
+    addVehicle: () => { S.add = { step:'vin', vin:'', form:null, tried:false }; go('add'); },
+    decode: () => { const r = validateVin(S.add.vin); const dd = decode(r.v); S.add.step = 'review'; S.add.form = { vin:r.v, ...dd, initialOdo:'', nickname:'', plate:'', color:'' }; render(); },
+    manual: () => { S.add.step = 'manual'; S.add.form = { vin:'', make:'', model:'', year:'', trim:'', details:{}, initialOdo:'', nickname:'', plate:'', color:'' }; render(); },
+    scanVin: () => startScan('vin', val => { S.add.vin = val; }), scanOdo: () => startScan('odo', val => { S.add.form.initialOdo = val; }),
+    scanOdoDraft: () => startScan('odo', val => { S.draft.odo = val; }), scanQr: () => startScan('qr', () => { S.transfer = { step:'confirm' }; }),
+    scanMode: () => { S.scan.mode = v; S.scan.locked = false; render(); setTimeout(() => { if (S.scan && S.route.name === 'scan') { S.scan.locked = true; render(); } }, 1500); },
+    torch: () => toast('Torch toggled'), shutter: () => { S.scan.locked = true; render(); },
+    useScan: () => { const val = { vin:'1HGCM82633A004352', odo:'47980', qr:'' }[S.scan.mode]; S.scan.onDone(val); back(); },
+    saveVehicle: () => { const f = S.add.form; S.add.tried = true; if (f.initialOdo === '' || !f.make || !f.model || !f.year) return render();
+      if (S.vehicles.length >= 20) return toast('Limit reached: 20 vehicles.');
+      const nv = { id:'v' + Date.now(), nickname:f.nickname, make:f.make, model:f.model, year:+f.year, trim:f.trim, vin:f.vin, plate:f.plate, color:f.color, initialOdo:+f.initialOdo, createdAt:'2026-10-26', details:f.details };
+      S.vehicles.push(nv); S.selected = nv.id; home(); toast('Vehicle added'); },
+    logWork: () => { S.draft = newDraft(id || S.selected); go('log'); },
+    openPicker: () => { d.pickerOpen = true; d.q = ''; render(); }, closePicker: () => { d.pickerOpen = false; render(); },
+    pick: () => { if (v) d.lines.push({ service:v, cost:null, notes:'' }); d.pickerOpen = false; render(); },
+    toggleLine: () => { const i = d.lines.findIndex(l => l.service === v); i >= 0 ? d.lines.splice(i, 1) : d.lines.push({ service:v, cost:null, notes:'' }); render(); },
+    rmLine: () => { d.lines.splice(+el.dataset.i, 1); render(); }, ptype: () => { d.providerType = d.providerType === v ? '' : v; render(); },
+    next: () => { const e = draftErrors(d); if (d.step === 0 && e.lines) { d.tried = true; return render(); } if (d.step === 1 && e.odo) { d.tried = true; return render(); } d.tried = false; d.step++; render(); },
+    prev: () => { d.step--; render(); },
+    saveRecord: () => { d.tried = true; const e = draftErrors(d); if (Object.keys(e).length) { if (variant() === 'B') d.step = e.lines ? 0 : e.odo ? 1 : 2; return render(); }
+      const rec = { id: d.id || 'r' + Date.now(), vehicleId:d.vehicleId, date:d.date, odo: d.odo === '' ? null : +d.odo, provider:d.provider, providerType:d.providerType, total: Math.round(parseFloat(d.total) * 100) || 0, notes:d.notes,
+        lines: d.lines.map(l => ({ ...l, cost: l.cost === '' || l.cost == null ? null : Math.round(parseFloat(l.cost) * 100) })) };
+      S.records = S.records.filter(r => r.id !== rec.id).concat(rec); S.selected = d.vehicleId; S.stack.pop(); back(); toast(d.id ? 'Record updated' : 'Record saved'); },
+    editRecord: () => { const r = S.records.find(x => x.id === S.route.id); S.draft = { ...newDraft(r.vehicleId), id:r.id, date:r.date, odo: r.odo ?? '', provider:r.provider, providerType:r.providerType, total:(r.total/100).toFixed(2), notes:r.notes, lines:r.lines.map(l => ({ ...l, cost: l.cost == null ? null : (l.cost/100).toFixed(2) })) }; go('log'); },
+    deleteRecord: () => { S.records = S.records.filter(r => r.id !== S.route.id); back(); toast('Record deleted (after a confirm dialog)'); },
+    deleteVehicle: () => { const vid = S.route.id; S.vehicles = S.vehicles.filter(x => x.id !== vid); S.records = S.records.filter(r => r.vehicleId !== vid); S.selected = S.vehicles[0] && S.vehicles[0].id; home(); toast('Vehicle deleted (after a confirm dialog)'); },
+    transferOut: () => go('transferOut'), transferIn: () => { S.transfer = null; go('transferIn'); }, newCode: () => toast('New code — the previous one no longer works'),
+    confirmTransfer: () => { home(); toast('Data received — old phone no longer has access'); },
+  }[a];
+  if (act) act();
+});
+document.addEventListener('input', ev => {
+  const t = ev.target;
+  if (t.id === 'vin') { S.add.vin = t.value; render(); }
+  else if (t.id === 'q') { S.draft.q = t.value; render(); }
+  else if (t.dataset.f) { S.add.form[t.dataset.f] = t.value; }
+  else if (t.dataset.d) { S.draft[t.dataset.d] = t.value; if (['odo','date','total'].includes(t.dataset.d)) render(); }
+  else if (t.dataset.line) { S.draft.lines[+t.dataset.line].cost = t.value; if (variant() === 'C') render(); }
+  else if (t.dataset.lnote) { S.draft.lines[+t.dataset.lnote].notes = t.value; }
+});
+document.addEventListener('change', ev => { if (ev.target.dataset.d === 'vehicleId') { S.draft.vehicleId = ev.target.value; render(); } });
+document.addEventListener('keydown', ev => {
+  if (ev.target.matches('input, textarea, select, [contenteditable]')) return;
+  if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') document.querySelector(`[data-proto="${ev.key === 'ArrowRight' ? 'next' : 'prev'}"]`).click();
+});
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+[install]
+# Isolated installs keep apps from silently importing each other's dependencies
+# (ADR-0005). Switch to "hoisted" only if a React Native native build breaks.
+linker = "isolated"
+exact = true

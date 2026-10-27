@@ -1,0 +1,48 @@
+# Local development: Postgres 18, a one-off migrate job, then the API image.
+# Day to day you can run only `postgres` and start the API on the host.
+name: vmt
+services:
+  postgres:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_USER: vmt
+      POSTGRES_PASSWORD: vmt
+      POSTGRES_DB: vmt
+    ports:
+      - "5482:5432"
+    volumes:
+      # Postgres 18 images keep PGDATA under /var/lib/postgresql/18/docker.
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vmt -d vmt"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: migrate
+    environment:
+      DATABASE_URL: postgresql://vmt:vmt@postgres:5432/vmt
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: runtime
+    environment:
+      DATABASE_URL: postgresql://vmt:vmt@postgres:5432/vmt
+      PORT: "3020"
+    ports:
+      - "3020:3020"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:

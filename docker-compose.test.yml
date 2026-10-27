@@ -1,0 +1,19 @@
+# Isolated Postgres for the API integration tests (`bun run --filter @vmt/api test:int`).
+# tmpfs keeps it fast and throwaway; it never shares data with the dev database.
+name: vmt-test
+services:
+  postgres:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_USER: vmt
+      POSTGRES_PASSWORD: vmt
+      POSTGRES_DB: vmt_test
+    ports:
+      - "5483:5432"
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vmt -d vmt_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 20

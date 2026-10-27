@@ -1,0 +1,24 @@
+{
+  "name": "vehicle-maintenance-tracker",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.4.4",
+  "engines": {
+    "node": ">=24.3.0 <25"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build:shared": "bun run --filter @vmt/shared build",
+    "lint": "oxlint --type-aware --deny-warnings",
+    "typecheck": "bun run build:shared && bun run --filter '*' typecheck",
+    "test": "bun run build:shared && bun run --filter '*' test"
+  },
+  "devDependencies": {
+    "oxlint": "1.89.0",
+    "oxlint-tsgolint": "7.0.2005",
+    "typescript": "~6.0.3"
+  }
+}
