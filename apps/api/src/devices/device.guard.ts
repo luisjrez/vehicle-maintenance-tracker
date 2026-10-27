@@ -7,6 +7,7 @@ import type { Env } from '../config/env.js';
 import { DomainError } from '../common/domain-error.js';
 import { IS_PUBLIC } from '../common/public.decorator.js';
 import { hashDeviceId, parseDeviceId } from './device-id.js';
+import { NewOwnerLimiter } from './new-owner-limiter.js';
 import { OwnersService } from './owners.service.js';
 import './owner-context.js';
 
@@ -16,6 +17,7 @@ export class DeviceGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly owners: OwnersService,
+    private readonly newOwners: NewOwnerLimiter,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -31,10 +33,13 @@ export class DeviceGuard implements CanActivate {
     if (deviceId === null) {
       throw new DomainError(401, 'INVALID_DEVICE_ID', 'A valid X-Device-Id header is required.');
     }
-    const { ownerId, deviceId: deviceRowId } = await this.owners.resolveDevice(
-      hashDeviceId(deviceId, this.env.DEVICE_ID_HASH_SECRET),
-    );
-    request.owner = { ownerId, deviceId: deviceRowId };
+    const deviceIdHash = hashDeviceId(deviceId, this.env.DEVICE_ID_HASH_SECRET);
+    let device = await this.owners.findDevice(deviceIdHash);
+    if (device === null) {
+      await this.newOwners.admit(request.ip ?? 'unknown');
+      device = await this.owners.createOwnerWithDevice(deviceIdHash);
+    }
+    request.owner = { ownerId: device.ownerId, deviceId: device.deviceId };
     return true;
   }
 }

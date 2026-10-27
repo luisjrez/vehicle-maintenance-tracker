@@ -61,3 +61,13 @@ EXPOSE 3020
 HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT ?? 3020) + '/v1/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
 CMD ["node", "dist/main.js"]
+
+# --- release: what the PaaS runs (last stage, so it is the default build) ---
+# It keeps the Prisma CLI so the platform's pre-deploy step can run
+# `migrate deploy` + the catalog seed with this same image (ADR-0009).
+FROM migrate AS release
+ENV NODE_ENV=production
+EXPOSE 3020
+HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT ?? 3020) + '/v1/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+CMD ["node", "dist/main.js"]

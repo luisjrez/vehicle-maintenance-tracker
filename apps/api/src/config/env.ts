@@ -13,6 +13,11 @@ const envSchema = z.object({
   /** VIN decodes per Device; keeps the API from becoming a free vPIC relay. */
   THROTTLE_VIN_LIMIT: positiveInt.default(30),
   THROTTLE_VIN_TTL_MS: positiveInt.default(3_600_000),
+  /** New Owners per client IP: stops minting Device IDs to farm Owners (ADR-0009). */
+  THROTTLE_NEW_OWNERS_LIMIT: positiveInt.default(10),
+  THROTTLE_NEW_OWNERS_TTL_MS: positiveInt.default(3_600_000),
+  /** Proxies in front of the API (the PaaS load balancer); needed to see the real client IP. */
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).default(0),
   VPIC_BASE_URL: z.url().default('https://vpic.nhtsa.dot.gov/api'),
   VPIC_TIMEOUT_MS: positiveInt.default(5_000),
 });

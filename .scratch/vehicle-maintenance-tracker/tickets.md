@@ -218,14 +218,14 @@ Status: ready-for-human
 
 ## 16. Abuse limits & production deploy
 
-Status: ready-for-agent
+Status: ready-for-human
 
 **What to build:** Final abuse protection for the unauthenticated API (≤10 new Owners per IP per hour, VIN decode and per-Device limits tuned, request bodies ≤100 KB) and v1 shipped to its two environments: the API image + managed Postgres on the chosen Docker PaaS (Railway or Fly.io) with migrations on deploy, and EAS builds distributed via TestFlight and Android internal testing (ADR-0009).
 
 **Blocked by:** 5. Add a vehicle by VIN, 13. Transfer to another phone
 
-- [ ] Throttling keyed by Device ID and IP, with integration tests for each limit
-- [ ] Body size limit enforced
-- [ ] Production API reachable over HTTPS with secrets outside the repo; migrations run on deploy
-- [ ] EAS build profiles for internal distribution; a TestFlight build installs and talks to production
-- [ ] Short runbook: deploy, roll back, rotate secrets
+- [x] Throttling keyed by Device ID and IP, with integration tests for each limit
+- [x] Body size limit enforced
+- [ ] Production API reachable over HTTPS with secrets outside the repo; migrations run on deploy (config ready: `railway.json` + Dockerfile `release` target, verified locally; needs the Railway project and secrets)
+- [ ] EAS build profiles for internal distribution; a TestFlight build installs and talks to production (profiles in `apps/mobile/eas.json`; needs the production URL and Apple/EAS credentials)
+- [x] Short runbook: deploy, roll back, rotate secrets (`docs/runbook.md`)

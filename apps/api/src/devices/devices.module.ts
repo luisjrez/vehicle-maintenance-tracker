@@ -6,6 +6,7 @@ import { ENV } from '../config/config.module.js';
 import type { Env } from '../config/env.js';
 import { AppThrottlerGuard } from './app-throttler.guard.js';
 import { DeviceGuard } from './device.guard.js';
+import { NewOwnerLimiter } from './new-owner-limiter.js';
 import { OwnerController } from './owner.controller.js';
 import { OwnersService } from './owners.service.js';
 
@@ -29,6 +30,7 @@ import { OwnersService } from './owners.service.js';
   controllers: [OwnerController],
   providers: [
     OwnersService,
+    NewOwnerLimiter,
     // Guard order matters: throttle first, so a flood is rejected before it can create Owners.
     { provide: APP_GUARD, useClass: AppThrottlerGuard },
     { provide: APP_GUARD, useClass: DeviceGuard },

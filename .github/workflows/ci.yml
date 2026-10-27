@@ -54,6 +54,8 @@ jobs:
           --health-retries 20
     env:
       DATABASE_URL: postgresql://vmt:vmt@localhost:5483/vmt_test
+      DEVICE_ID_HASH_SECRET: test-secret-test-secret-test-secret-0000
+      THROTTLE_NEW_OWNERS_LIMIT: "100000"
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -73,3 +75,4 @@ jobs:
       - uses: actions/checkout@v4
       - run: docker build -f apps/api/Dockerfile --target runtime -t vmt-api:ci .
       - run: docker build -f apps/api/Dockerfile --target migrate -t vmt-api-migrate:ci .
+      - run: docker build -f apps/api/Dockerfile -t vmt-api-release:ci .
