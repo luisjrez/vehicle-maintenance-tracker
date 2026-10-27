@@ -1,0 +1,177 @@
+appId: dev.luisjrez.maintenancetracker
+name: Fill in every vehicle and record field
+env:
+  METRO_URL: http%3A%2F%2Flocalhost%3A8082
+---
+- runFlow: subflows/launch-fresh.yaml
+- tapOn:
+    id: garage-empty-add
+- tapOn:
+    id: vin-skip
+
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-year, VALUE: "2021" }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-make, VALUE: Ford }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-model, VALUE: F-150 }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-initial-odometer, VALUE: "31200" }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-nickname, VALUE: Work truck }
+- scrollUntilVisible:
+    element:
+      id: vehicle-more-details
+    direction: DOWN
+- assertVisible: Trim, engine, plate and color
+- tapOn:
+    id: vehicle-more-details
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-trim, VALUE: XLT }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-body-class, VALUE: Pickup }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-vehicle-type, VALUE: Truck }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-fuel-type, VALUE: Gasoline }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-electrification, VALUE: None }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-cylinders, VALUE: "6" }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-displacement, VALUE: "3.5" }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-drive-type, VALUE: 4WD }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-plate, VALUE: 8KTR442 }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-plate-state, VALUE: TX }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-color, VALUE: Blue }
+- scrollUntilVisible:
+    element:
+      id: vehicle-more-details
+    direction: UP
+- tapOn:
+    id: vehicle-more-details
+- assertVisible:
+    id: vehicle-more-details-summary
+    text: XLT · Pickup · Truck · Gasoline · None · 6 cyl · 3.5 L · 4WD · 8KTR442 TX · Blue
+- scrollUntilVisible:
+    element:
+      id: add-vehicle-save
+    direction: DOWN
+- tapOn:
+    id: add-vehicle-save
+- extendedWaitUntil:
+    visible:
+      id: vehicle-summary
+    timeout: 15000
+- assertVisible: Work truck
+
+# A record with a common service, one from search, scheduled maintenance with a
+# package code, a custom service, the provider, per-line costs and notes.
+- tapOn:
+    id: garage-fab
+- tapOn:
+    id: action-log-work
+- tapOn:
+    id: common-service-oil-change
+- tapOn:
+    id: log-work-search
+- tapOn:
+    id: service-search
+- inputText: cabin
+- tapOn:
+    id: service-option-cabin-air-filter
+- tapOn:
+    id: log-work-search
+- tapOn:
+    id: service-search
+- inputText: scheduled
+- tapOn:
+    id: service-option-scheduled-maintenance
+- tapOn:
+    id: log-work-search
+- tapOn:
+    id: service-search
+- inputText: Bed liner touch-up
+- tapOn:
+    id: service-option-custom:Bed liner touch-up
+- tapOn:
+    id: log-work-next
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: log-work-odometer, VALUE: "36000" }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: log-work-provider-name, VALUE: Lone Star Ford }
+- tapOn:
+    id: provider-type-dealer
+- tapOn:
+    id: log-work-next
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: log-work-total, VALUE: "412.50" }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: line-cost-0, VALUE: "79.99" }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: line-notes-0, VALUE: Synthetic 5W-30 }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: line-cost-1, VALUE: "45" }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: line-package-2, VALUE: 30K }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: line-cost-2, VALUE: "250" }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: line-cost-3, VALUE: "37.51" }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: log-work-notes, VALUE: Next service at 46k. }
+- tapOn:
+    id: log-work-save
+- extendedWaitUntil:
+    visible:
+      id: history-list
+    timeout: 15000
+
+# The record shows everything that was entered.
+- scrollUntilVisible:
+    element:
+      id: history-row-.*
+    direction: DOWN
+- tapOn:
+    id: history-row-.*
+- assertVisible:
+    id: record-detail-total
+    text: \$412\.50
+- assertVisible: Lone Star Ford · Dealer
+- assertVisible: 30K
+- assertVisible: Synthetic 5W-30
+- assertVisible: Bed liner touch-up
+- scrollUntilVisible:
+    element:
+      text: Next service at 46k.
+    direction: DOWN

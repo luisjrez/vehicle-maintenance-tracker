@@ -1,5 +1,6 @@
 # Starts the dev build on a brand-new Device: clearing the keychain drops the stored
 # Device ID, so the API creates a new Owner and every flow begins with an empty garage.
+# The dev menu stays closed at launch through EXDevMenu* keys in app.json.
 appId: dev.luisjrez.maintenancetracker
 ---
 - launchApp:
@@ -7,24 +8,7 @@ appId: dev.luisjrez.maintenancetracker
     clearKeychain: true
     stopApp: true
 - openLink: vmt://expo-development-client/?url=${METRO_URL}
-# With its state cleared, the dev build opens the dev menu (and its onboarding) over
-# the app once the bundle loads; it hides the app from the accessibility tree.
-- extendedWaitUntil:
-    visible: Toggle performance monitor
-    timeout: 60000
-    optional: true
-- runFlow:
-    when:
-      visible: Continue
-    commands:
-      - tapOn: Continue
-- runFlow:
-    when:
-      visible: Toggle performance monitor
-    commands:
-      - tapOn:
-          id: xmark
 - extendedWaitUntil:
     visible:
       id: garage-empty
-    timeout: 30000
+    timeout: 60000

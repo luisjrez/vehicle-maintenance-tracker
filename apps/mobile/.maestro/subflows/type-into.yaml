@@ -1,0 +1,14 @@
+# Scrolls to a field, replaces its text and closes the keyboard.
+# Params: FIELD (testID), VALUE.
+appId: dev.luisjrez.maintenancetracker
+---
+- scrollUntilVisible:
+    element:
+      id: ${FIELD}
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: ${FIELD}
+- eraseText: 30
+- inputText: ${VALUE}
+- runFlow: dismiss-keyboard.yaml

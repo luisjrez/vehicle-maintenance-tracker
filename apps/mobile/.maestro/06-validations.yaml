@@ -1,0 +1,157 @@
+appId: dev.luisjrez.maintenancetracker
+name: Validation messages on the vehicle form and the log-work wizard
+env:
+  METRO_URL: http%3A%2F%2Flocalhost%3A8082
+---
+- runFlow: subflows/launch-fresh.yaml
+- tapOn:
+    id: garage-empty-add
+
+# VIN: wrong check digit, then a letter a VIN never uses; Look up stays disabled.
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vin-input, VALUE: 1HGCM82633A004353 }
+- assertVisible:
+    id: vin-input-error
+    text: .*doesn't add up.*
+- assertVisible:
+    id: vin-look-up
+    enabled: false
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vin-input, VALUE: 1HGCM8263OA004352 }
+- assertVisible:
+    id: vin-input-error
+    text: .*never I, O or Q.*
+- tapOn:
+    id: vin-skip
+
+# Saving an empty form flags every required field and sends nothing.
+- scrollUntilVisible:
+    element:
+      id: add-vehicle-save
+    direction: DOWN
+- tapOn:
+    id: add-vehicle-save
+- assertVisible:
+    id: vehicle-initial-odometer-error
+    text: Enter the odometer in whole miles.
+- scrollUntilVisible:
+    element:
+      id: vehicle-year-error
+    direction: UP
+- assertVisible:
+    id: vehicle-year-error
+    text: Year is required.
+- assertVisible:
+    id: vehicle-make-error
+    text: Make is required.
+- assertVisible:
+    id: vehicle-model-error
+    text: Model is required.
+
+# Out-of-range year, and a plate state that isn't a US state: its error opens "More details".
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-year, VALUE: "1850" }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-make, VALUE: Toyota }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-model, VALUE: Camry }
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-initial-odometer, VALUE: "42000" }
+- scrollUntilVisible:
+    element:
+      id: add-vehicle-save
+    direction: DOWN
+- tapOn:
+    id: add-vehicle-save
+- scrollUntilVisible:
+    element:
+      id: vehicle-year-error
+    direction: UP
+- assertVisible:
+    id: vehicle-year-error
+    text: Enter a year from 1886.
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-year, VALUE: "2019" }
+- scrollUntilVisible:
+    element:
+      id: vehicle-more-details
+    direction: DOWN
+- tapOn:
+    id: vehicle-more-details
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-plate-state, VALUE: ZZ }
+- scrollUntilVisible:
+    element:
+      id: add-vehicle-save
+    direction: DOWN
+- tapOn:
+    id: add-vehicle-save
+- scrollUntilVisible:
+    element:
+      id: vehicle-plate-state-error
+    direction: UP
+- assertVisible:
+    id: vehicle-plate-state-error
+    text: Choose a US state.
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: vehicle-plate-state, VALUE: TX }
+- scrollUntilVisible:
+    element:
+      id: add-vehicle-save
+    direction: DOWN
+- tapOn:
+    id: add-vehicle-save
+- extendedWaitUntil:
+    visible:
+      id: vehicle-summary
+    timeout: 15000
+
+# Log work: each step blocks until it's valid.
+- tapOn:
+    id: garage-fab
+- tapOn:
+    id: action-log-work
+- tapOn:
+    id: log-work-next
+- assertVisible:
+    id: log-work-services-error
+    text: Pick at least one service.
+- tapOn:
+    id: common-service-oil-change
+- tapOn:
+    id: log-work-next
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: log-work-odometer, VALUE: "99999999" }
+- tapOn:
+    id: log-work-next
+- assertVisible:
+    id: log-work-odometer-error
+    text: The odometer can be at most 9,999,999 miles.
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: log-work-odometer, VALUE: "45500" }
+- tapOn:
+    id: log-work-next
+- tapOn:
+    id: log-work-save
+- assertVisible:
+    id: log-work-total-error
+- runFlow:
+    file: subflows/type-into.yaml
+    env: { FIELD: log-work-total, VALUE: "89.99" }
+- tapOn:
+    id: log-work-save
+- extendedWaitUntil:
+    visible:
+      id: history-list
+    timeout: 15000
