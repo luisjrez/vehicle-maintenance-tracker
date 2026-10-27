@@ -5,7 +5,7 @@ import { TextField } from '@/components/text-field';
 import { strings } from '@/shared/strings';
 import { colors } from '@/shared/ui/colors';
 import type { DraftErrors } from './draft-to-input';
-import { useLogWorkDraft } from './log-work-draft';
+import { useLogWorkDraft } from '@/shared/log-work-draft/log-work-draft';
 import { LineCostRow } from './line-cost-row';
 
 type Props = { errors: DraftErrors };

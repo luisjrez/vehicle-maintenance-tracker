@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/components/button';
-import { useLogWorkDraft } from '@/features/log-work/log-work-draft';
+import { useLogWorkDraft } from '@/shared/log-work-draft/log-work-draft';
 import { selectSelectedVehicle, useGarageStore } from '@/shared/store/garage-store';
 import { strings } from '@/shared/strings';
 import { colors } from '@/shared/ui/colors';

@@ -4,7 +4,8 @@ import { recordFixture, vehicleFixture } from '@/test/fixtures';
 import { jsonResponse, requestBody } from '@/test/http';
 import { resetRouterMock, routerMock } from '@/test/router-mock';
 import { resetGarageStore } from '@/test/store';
-import { useLogWorkDraft } from './log-work-draft';
+import { useLogWorkDraft } from '@/shared/log-work-draft/log-work-draft';
+import { recordToDraft } from '@/shared/log-work-draft/record-to-draft';
 import { LogWorkScreen } from './log-work-screen';
 
 describe('LogWorkScreen', () => {
@@ -112,5 +113,33 @@ describe('LogWorkScreen odometer consistency', () => {
     await fireEvent.press(screen.getByTestId('log-work-next'));
 
     expect(screen.getByTestId('log-work-step-cost')).toBeTruthy();
+  });
+});
+
+describe('LogWorkScreen editing', () => {
+  const fetchMock = jest.spyOn(globalThis, 'fetch');
+
+  beforeEach(() => {
+    resetGarageStore();
+    resetRouterMock();
+    fetchMock.mockReset();
+  });
+
+  it('saves an edited record with PATCH and replaces it in the store', async () => {
+    const original = recordFixture({ id: 'record-1', vehicleId: 'vehicle-1', totalCents: 4_500 });
+    const edited = { ...original, totalCents: 5_500 };
+    useGarageStore.setState({ vehicles: [vehicleFixture({ id: 'vehicle-1' })], records: [original] });
+    useLogWorkDraft.getState().start(recordToDraft(original));
+    fetchMock.mockResolvedValue(jsonResponse(200, edited));
+    await render(<LogWorkScreen vehicleId="vehicle-1" />);
+
+    await fireEvent.press(screen.getByTestId('log-work-next'));
+    await fireEvent.press(screen.getByTestId('log-work-next'));
+    await fireEvent.changeText(screen.getByTestId('log-work-total'), '55');
+    await fireEvent.press(screen.getByTestId('log-work-save'));
+
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringMatching(/\/v1\/records\/record-1$/), expect.objectContaining({ method: 'PATCH' }));
+    expect(requestBody(0)).toMatchObject({ totalCents: 5_500 });
+    expect(useGarageStore.getState().records).toEqual([edited]);
   });
 });

@@ -55,6 +55,13 @@ export const strings = {
   },
   recordDetail: {
     missing: 'This record is no longer available.',
+    odometer: 'Odometer',
+    provider: 'Provider',
+    edit: 'Edit',
+    delete: 'Delete record',
+    confirmTitle: 'Delete this record?',
+    confirmBody: 'This permanently deletes the record and its services. This cannot be undone.',
+    cancel: 'Cancel',
   },
   servicePicker: {
     title: 'All services',

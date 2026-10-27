@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { TextField } from '@/components/text-field';
 import { strings } from '@/shared/strings';
 import { colors } from '@/shared/ui/colors';
-import type { DraftLineItem, LineItemField } from './log-work-draft';
+import type { DraftLineItem, LineItemField } from '@/shared/log-work-draft/log-work-draft';
 
 type Props = {
   item: DraftLineItem;

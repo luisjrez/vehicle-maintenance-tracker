@@ -6,7 +6,7 @@ import { Chip } from '@/components/chip';
 import { SectionHeader } from '@/components/section-header';
 import { strings } from '@/shared/strings';
 import { colors } from '@/shared/ui/colors';
-import { type DraftLineItem, useLogWorkDraft } from './log-work-draft';
+import { type DraftLineItem, useLogWorkDraft } from '@/shared/log-work-draft/log-work-draft';
 import { SelectedServiceRow } from './selected-service-row';
 
 const pickKey = (pick: (typeof COMMON_SERVICES)[number]) => `${pick.serviceSlug}|${pick.notes ?? ''}`;

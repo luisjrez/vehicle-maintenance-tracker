@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { checkOdometerConsistency, type CreateRecord, type ServiceRecord } from '@vmt/shared';
 import { DomainError } from '../common/domain-error.js';
-import { vehicleNotFound } from '../common/not-found.js';
+import { recordNotFound, vehicleNotFound } from '../common/not-found.js';
 import { fromIsoDate, toIsoDate } from '../common/dates.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../database/prisma.service.js';
@@ -62,6 +62,42 @@ export class RecordsService {
       });
     });
     return toRecordDto(row);
+  }
+
+  /**
+   * Replaces every field and line item, re-running all record rules and the
+   * odometer check against the record's neighbours (excluding itself).
+   */
+  async update(ownerId: string, recordId: string, input: CreateRecord): Promise<ServiceRecord> {
+    const existing = await this.findOwnRecord(ownerId, recordId);
+    const row = await this.prisma.$transaction(async (tx) => {
+      await assertOdometerConsistent(tx, ownerId, existing.vehicleId, {
+        id: recordId,
+        date: input.date,
+        odometer: input.odometer ?? null,
+      });
+      await tx.lineItem.deleteMany({ where: { recordId } });
+      return tx.serviceRecord.update({
+        where: { id: recordId },
+        data: { ...recordColumns(input), lineItems: { create: lineItemRows(input) } },
+        include: lineItemsInOrder,
+      });
+    });
+    return toRecordDto(row);
+  }
+
+  async remove(ownerId: string, recordId: string): Promise<void> {
+    const { count } = await this.prisma.serviceRecord.deleteMany({ where: { id: recordId, vehicle: { ownerId } } });
+    if (count === 0) throw recordNotFound();
+  }
+
+  private async findOwnRecord(ownerId: string, recordId: string): Promise<{ vehicleId: string }> {
+    const record = await this.prisma.serviceRecord.findFirst({
+      where: { id: recordId, vehicle: { ownerId } },
+      select: { vehicleId: true },
+    });
+    if (record === null) throw recordNotFound();
+    return record;
   }
 
   /** 404 for a vehicle of another Owner too, so ids cannot be probed. */

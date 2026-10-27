@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from '@nestjs/common';
 import { type CreateRecord, createRecordSchema, type ServiceRecord } from '@vmt/shared';
 import { idParamSchema } from '../common/id-param.js';
 import { CurrentOwner } from '../devices/current-owner.decorator.js';
@@ -35,5 +35,24 @@ export class RecordsController {
   @Get()
   list(@CurrentOwner() owner: OwnerContext): Promise<ServiceRecord[]> {
     return this.records.listForOwner(owner.ownerId);
+  }
+
+  /** The body is the whole record, as when creating it: edits go through the same rules. */
+  @Patch(':recordId')
+  update(
+    @CurrentOwner() owner: OwnerContext,
+    @Param('recordId', { schema: idParamSchema }) recordId: string,
+    @Body({ schema: createRecordSchema }) input: CreateRecord,
+  ): Promise<ServiceRecord> {
+    return this.records.update(owner.ownerId, recordId, input);
+  }
+
+  @Delete(':recordId')
+  @HttpCode(204)
+  remove(
+    @CurrentOwner() owner: OwnerContext,
+    @Param('recordId', { schema: idParamSchema }) recordId: string,
+  ): Promise<void> {
+    return this.records.remove(owner.ownerId, recordId);
   }
 }

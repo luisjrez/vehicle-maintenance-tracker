@@ -1,5 +1,5 @@
 import { buildRecordInput, stepErrors } from './draft-to-input';
-import type { LogWorkDraft } from './log-work-draft';
+import type { LogWorkDraft } from '@/shared/log-work-draft/log-work-draft';
 
 function draft(overrides: Partial<LogWorkDraft> = {}): LogWorkDraft {
   return {

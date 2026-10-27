@@ -1,4 +1,4 @@
-import { useLogWorkDraft } from '@/features/log-work/log-work-draft';
+import { useLogWorkDraft } from '@/shared/log-work-draft/log-work-draft';
 import { useGarageStore } from '@/shared/store/garage-store';
 
 export function resetGarageStore(): void {

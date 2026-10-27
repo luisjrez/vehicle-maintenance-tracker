@@ -4,13 +4,13 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/components/button';
 import { ErrorBanner } from '@/components/error-banner';
 import { ApiError, errorMessage } from '@/shared/api/api-error';
-import { createRecord } from '@/shared/api/records-api';
+import { createRecord, updateRecord } from '@/shared/api/records-api';
 import { useGarageStore } from '@/shared/store/garage-store';
 import { strings } from '@/shared/strings';
 import { colors } from '@/shared/ui/colors';
 import { CostStep } from './cost-step';
 import { buildRecordInput, type DraftErrors, odometerConsistencyError, stepErrors } from './draft-to-input';
-import { useLogWorkDraft } from './log-work-draft';
+import { useLogWorkDraft } from '@/shared/log-work-draft/log-work-draft';
 import { WhatStep } from './what-step';
 import { WhenStep } from './when-step';
 
@@ -20,6 +20,7 @@ const STEP_TITLES = { 1: strings.logWork.whatTitle, 2: strings.logWork.whenTitle
 export function LogWorkScreen({ vehicleId }: { vehicleId: string }) {
   const router = useRouter();
   const draftVehicleId = useLogWorkDraft((state) => state.vehicleId);
+  const recordId = useLogWorkDraft((state) => state.recordId);
   const step = useLogWorkDraft((state) => state.step);
   const start = useLogWorkDraft((state) => state.start);
   const setStep = useLogWorkDraft((state) => state.setStep);
@@ -64,7 +65,7 @@ export function LogWorkScreen({ vehicleId }: { vehicleId: string }) {
     setSaveError(null);
     setSaving(true);
     try {
-      const record = await createRecord(vehicleId, result.input);
+      const record = recordId === null ? await createRecord(vehicleId, result.input) : await updateRecord(recordId, result.input);
       upsertRecord(record);
       reset();
       router.back();
@@ -80,7 +81,7 @@ export function LogWorkScreen({ vehicleId }: { vehicleId: string }) {
     } finally {
       setSaving(false);
     }
-  }, [vehicleId, upsertRecord, reset, router, setStep]);
+  }, [vehicleId, recordId, upsertRecord, reset, router, setStep]);
 
   const handleSave = useCallback(() => {
     void save();
@@ -91,7 +92,9 @@ export function LogWorkScreen({ vehicleId }: { vehicleId: string }) {
     // sheet lays out a nested one with no height and the content disappears.
     <>
       <ScrollView style={styles.sheet} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-        <Text style={styles.stepLabel}>{strings.logWork.stepOf(step)}</Text>
+        <Text style={styles.stepLabel}>
+          {`${recordId === null ? strings.logWork.title : strings.logWork.editTitle} · ${strings.logWork.stepOf(step)}`}
+        </Text>
         <Text style={styles.title}>{STEP_TITLES[step]}</Text>
         {step === 1 ? <WhatStep error={errors.lineItems} onSearch={openSearch} /> : null}
         {step === 2 ? <WhenStep errors={errors} /> : null}

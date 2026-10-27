@@ -1,6 +1,14 @@
-import { lineItemName, PROVIDER_TYPE_LABELS } from '@vmt/shared';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { lineItemName, PROVIDER_TYPE_LABELS, type ServiceRecord } from '@vmt/shared';
+import { useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Button } from '@/components/button';
 import { Card } from '@/components/card';
+import { ErrorBanner } from '@/components/error-banner';
+import { useLogWorkDraft } from '@/shared/log-work-draft/log-work-draft';
+import { recordToDraft } from '@/shared/log-work-draft/record-to-draft';
+import { errorMessage } from '@/shared/api/api-error';
+import { deleteRecord } from '@/shared/api/records-api';
 import { SectionHeader } from '@/components/section-header';
 import { formatCents, formatDate, formatMiles } from '@/shared/format';
 import { useGarageStore } from '@/shared/store/garage-store';
@@ -18,6 +26,45 @@ export function RecordDetailScreen({ recordId }: { recordId: string }) {
     );
   }
 
+  return <RecordDetail record={record} />;
+}
+
+function RecordDetail({ record }: { record: ServiceRecord }) {
+  const t = strings.recordDetail;
+  const router = useRouter();
+  const removeRecord = useGarageStore((state) => state.removeRecord);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const edit = useCallback(() => {
+    useLogWorkDraft.getState().start(recordToDraft(record));
+    router.replace({ pathname: '/log-work', params: { vehicleId: record.vehicleId } });
+  }, [record, router]);
+
+  const performDelete = useCallback(async () => {
+    setDeleteError(null);
+    setDeleting(true);
+    try {
+      await deleteRecord(record.id);
+      removeRecord(record.id);
+      router.back();
+    } catch (error) {
+      setDeleteError(errorMessage(error));
+      setDeleting(false);
+    }
+  }, [record.id, removeRecord, router]);
+
+  const handleConfirmedDelete = useCallback(() => {
+    void performDelete();
+  }, [performDelete]);
+
+  const confirmDelete = useCallback(() => {
+    Alert.alert(t.confirmTitle, t.confirmBody, [
+      { text: t.cancel, style: 'cancel' },
+      { text: t.delete, style: 'destructive', onPress: handleConfirmedDelete },
+    ]);
+  }, [t, handleConfirmedDelete]);
+
   const provider = [record.providerName, record.providerType === null ? null : PROVIDER_TYPE_LABELS[record.providerType]]
     .filter((part) => part !== null)
     .join(' · ');
@@ -29,8 +76,8 @@ export function RecordDetailScreen({ recordId }: { recordId: string }) {
         {formatCents(record.totalCents)}
       </Text>
       <Card>
-        <Detail label={strings.logWork.odometer} value={record.odometer === null ? '—' : formatMiles(record.odometer)} />
-        <Detail label={strings.logWork.provider} value={provider === '' ? '—' : provider} />
+        <Detail label={t.odometer} value={record.odometer === null ? '—' : formatMiles(record.odometer)} />
+        <Detail label={t.provider} value={provider === '' ? '—' : provider} />
       </Card>
       <SectionHeader title={strings.logWork.selectedServices} />
       <Card>
@@ -55,6 +102,9 @@ export function RecordDetailScreen({ recordId }: { recordId: string }) {
           </Card>
         </>
       )}
+      {deleteError === null ? null : <ErrorBanner testID="record-delete-error" message={deleteError} onRetry={handleConfirmedDelete} />}
+      <Button testID="record-edit" title={t.edit} variant="secondary" onPress={edit} disabled={deleting} />
+      <Button testID="record-delete" title={t.delete} variant="destructive" onPress={confirmDelete} loading={deleting} />
     </ScrollView>
   );
 }

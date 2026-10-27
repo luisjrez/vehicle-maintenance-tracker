@@ -125,16 +125,16 @@ Status: done
 
 ## 9. Record detail, edit & delete
 
-Status: ready-for-agent
+Status: done
 
 **What to build:** Tapping a history entry opens a sheet with the record's total, date, odometer, provider (+type), line items with costs/notes and notes; "Edit" reopens the wizard prefilled with every field editable under the same validations; "Delete" hard-deletes after a native confirmation.
 
 **Blocked by:** 8. Odometer consistency
 
-- [ ] Update/delete record endpoints scoped to the Owner, re-running all record rules and odometer consistency
-- [ ] Record detail sheet, edit via the wizard, delete with confirmation
-- [ ] Store and history update from API responses
-- [ ] Tests for edit re-validation and delete
+- [x] Update/delete record endpoints scoped to the Owner, re-running all record rules and odometer consistency
+- [x] Record detail sheet, edit via the wizard, delete with confirmation
+- [x] Store and history update from API responses
+- [x] Tests for edit re-validation and delete
 
 ## 10. Spending report
 

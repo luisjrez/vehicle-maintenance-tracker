@@ -6,7 +6,7 @@ import { sorted } from '@/shared/sorted';
 import { useGarageStore } from '@/shared/store/garage-store';
 import { strings } from '@/shared/strings';
 import { colors } from '@/shared/ui/colors';
-import { useLogWorkDraft } from './log-work-draft';
+import { useLogWorkDraft } from '@/shared/log-work-draft/log-work-draft';
 
 type Row = { kind: 'service'; service: CatalogService } | { kind: 'custom'; name: string };
 type Section = { title: string; data: Row[] };

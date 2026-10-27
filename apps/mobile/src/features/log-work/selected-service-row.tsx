@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { strings } from '@/shared/strings';
 import { colors } from '@/shared/ui/colors';
-import type { DraftLineItem } from './log-work-draft';
+import type { DraftLineItem } from '@/shared/log-work-draft/log-work-draft';
 
 type Props = { item: DraftLineItem; onRemove: (key: string) => void };
 

@@ -11,7 +11,7 @@ import {
 } from '@vmt/shared';
 import { parseInteger } from '@/shared/forms/field-errors';
 import { strings } from '@/shared/strings';
-import type { LogWorkDraft } from './log-work-draft';
+import type { LogWorkDraft } from '@/shared/log-work-draft/log-work-draft';
 
 /** Keyed by issue path: `totalCents`, `odometer`, `lineItems.0.costCents`… */
 export type DraftErrors = Partial<Record<string, string>>;
