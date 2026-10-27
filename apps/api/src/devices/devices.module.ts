@@ -1,0 +1,29 @@
+import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ENV } from '../config/config.module.js';
+import type { Env } from '../config/env.js';
+import { AppThrottlerGuard } from './app-throttler.guard.js';
+import { DeviceGuard } from './device.guard.js';
+import { OwnerController } from './owner.controller.js';
+import { OwnersService } from './owners.service.js';
+
+@Module({
+  imports: [
+    ThrottlerModule.forRootAsync({
+      inject: [ENV],
+      useFactory: (env: Env) => ({
+        throttlers: [{ name: 'device', limit: env.THROTTLE_DEVICE_LIMIT, ttl: env.THROTTLE_DEVICE_TTL_MS }],
+      }),
+    }),
+  ],
+  controllers: [OwnerController],
+  providers: [
+    OwnersService,
+    // Guard order matters: throttle first, so a flood is rejected before it can create Owners.
+    { provide: APP_GUARD, useClass: AppThrottlerGuard },
+    { provide: APP_GUARD, useClass: DeviceGuard },
+  ],
+  exports: [OwnersService],
+})
+export class DevicesModule {}

@@ -22,17 +22,17 @@ Status: done
 
 ## 2. Mobile walking skeleton
 
-Status: ready-for-agent
+Status: done
 
 **What to build:** The Expo SDK 58 app inside the monorepo, built as a dev build (no Expo Go) for iOS and Android, using Expo Router, that shows whether the API health check succeeds. It imports something from the shared package to prove the workspace wiring.
 
 **Blocked by:** 1. API walking skeleton
 
-- [ ] Expo SDK 58 / RN 0.88 app runs as a dev build on the iOS simulator and an Android emulator
-- [ ] Metro resolves the shared package in the Bun workspace (isolated installs; fallback to hoisted only if native builds break, documented)
-- [ ] A screen shows API health (OK / unreachable) using a configurable API base URL
-- [ ] jest-expo set up with one passing test; oxlint + typecheck for mobile added to CI
-- [ ] UI strings centralized; `Intl` en-US formatting helpers in place
+- [x] Expo SDK 58 / RN 0.88 app runs as a dev build on the iOS simulator and an Android emulator
+- [x] Metro resolves the shared package in the Bun workspace (isolated installs; fallback to hoisted only if native builds break, documented)
+- [x] A screen shows API health (OK / unreachable) using a configurable API base URL
+- [x] jest-expo set up with one passing test; oxlint + typecheck for mobile added to CI
+- [x] UI strings centralized; `Intl` en-US formatting helpers in place
 
 ## 3. Device identity
 
@@ -42,13 +42,13 @@ Status: ready-for-agent
 
 **Blocked by:** 1. API walking skeleton, 2. Mobile walking skeleton
 
-- [ ] App obtains the Device ID per platform and sends it as `X-Device-Id` on every request
+- [x] App obtains the Device ID per platform and sends it as `X-Device-Id` on every request
 - [ ] iOS: reinstalling the app keeps the same Device ID (Keychain); Android uses `ANDROID_ID`
-- [ ] API rejects requests without a well-formed Device ID
-- [ ] API stores only a hash; unknown Device ID → new Owner + Device; known → same Owner
-- [ ] Device ID never appears in logs (verified by a test) or in the UI
-- [ ] Base throttling per Device ID (~60 req/min) with a clear 429 error
-- [ ] Integration tests cover implicit creation and Owner scoping
+- [x] API rejects requests without a well-formed Device ID
+- [x] API stores only a hash; unknown Device ID → new Owner + Device; known → same Owner
+- [x] Device ID never appears in logs (verified by a test) or in the UI
+- [x] Base throttling per Device ID (~60 req/min) with a clear 429 error
+- [x] Integration tests cover implicit creation and Owner scoping
 
 ## 4. Add a vehicle manually + garage home
 

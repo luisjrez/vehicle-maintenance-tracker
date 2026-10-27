@@ -39,3 +39,16 @@ cp apps/api/.env.example apps/api/.env
 bun run --filter @vmt/api migrate:deploy
 bun run --filter @vmt/api start:dev
 ```
+
+## Mobile app (dev builds, no Expo Go)
+
+```sh
+cd apps/mobile
+bun run start                 # Metro on port 8082 (8081 is often taken by other projects)
+bun run ios                   # or: bun run android
+bun run test                  # jest-expo
+```
+
+- The app reaches the API at `EXPO_PUBLIC_API_URL`, or by default at the Metro host on port 3020 (Android emulator: `adb reverse tcp:3020 tcp:3020 && adb reverse tcp:8082 tcp:8082`).
+- Bun **isolated** installs work for the app. Two things were needed: `jest.config.js` adds Bun's `.bun` store to jest-expo's `transformIgnorePatterns`, and the root `overrides` pin `react`/`react-dom` to the SDK's 19.3.0 (Prisma Studio otherwise pulls a second React). `expo-doctor` still reports duplicate `expo`/`expo-constants` folders (peer-dependency variants of the same version); the Metro bundle contains a single copy of each, checked via the export source map. Switch `bunfig.toml` to `linker = "hoisted"` only if a native build breaks.
+- Every request carries `X-Device-Id` (`ANDROID_ID` on Android, a Keychain UUID on iOS). It is a credential: never log or display it.

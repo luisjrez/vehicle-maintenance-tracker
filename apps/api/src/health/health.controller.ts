@@ -1,7 +1,11 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { HealthResponse } from '@vmt/shared';
+import { Public } from '../common/public.decorator.js';
 import { PrismaService } from '../database/prisma.service.js';
 
+@Public()
+@SkipThrottle()
 @Controller('health')
 export class HealthController {
   constructor(private readonly prisma: PrismaService) {}

@@ -8,3 +8,27 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+/// The anonymous holder of all data (ADR-0001). There are no user accounts.
+model Owner {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  devices Device[]
+
+  @@map("owners")
+}
+
+/// An app install acting for an Owner. Only the HMAC of its Device ID is stored;
+/// revoking a device deletes the row.
+model Device {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  ownerId      String   @map("owner_id") @db.Uuid
+  deviceIdHash String   @unique @map("device_id_hash")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  owner Owner @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@map("devices")
+}
