@@ -154,3 +154,34 @@ describe('AddVehicleScreen', () => {
     expect(screen.getByTestId('vehicle-make')).toHaveDisplayValue('');
   });
 });
+
+describe('AddVehicleScreen offline', () => {
+  const fetchMock = jest.spyOn(globalThis, 'fetch');
+
+  beforeEach(() => {
+    resetGarageStore();
+    resetRouterMock();
+    fetchMock.mockReset();
+  });
+
+  it('fails with a retryable error that keeps the form, then succeeds on Retry', async () => {
+    const created = vehicleFixture();
+    fetchMock.mockRejectedValueOnce(new TypeError('Network request failed'));
+    fetchMock.mockResolvedValueOnce(jsonResponse(201, created));
+    await render(<AddVehicleScreen />);
+    await skipVin();
+    await fillRequiredFields();
+
+    await fireEvent.press(screen.getByTestId('add-vehicle-save'));
+
+    expect(await screen.findByTestId('error-banner')).toHaveTextContent(/offline/i);
+    expect(screen.getByTestId('vehicle-model')).toHaveDisplayValue('Civic');
+    expect(useGarageStore.getState().vehicles).toEqual([]);
+
+    await fireEvent.press(screen.getByTestId('error-banner-retry'));
+
+    expect(requestBody(1)).toEqual(requestBody(0));
+    expect(useGarageStore.getState().vehicles).toEqual([created]);
+    expect(routerMock.back).toHaveBeenCalled();
+  });
+});

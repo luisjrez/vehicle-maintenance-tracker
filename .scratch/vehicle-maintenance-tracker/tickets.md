@@ -150,16 +150,16 @@ Status: done
 
 ## 11. Offline browsing & resilient writes
 
-Status: ready-for-agent
+Status: done
 
 **What to build:** With no connectivity the Owner can still browse the garage, vehicle details, history and reports from the persisted store; vehicle data refreshes from the API at most once a day; any write without connectivity fails with a clear, retryable error that keeps the form input.
 
 **Blocked by:** 7. Log a service record
 
-- [ ] Cold start offline shows the last synced data
-- [ ] Daily refresh policy for vehicle data; records refreshed on app foreground when online
-- [ ] Failed writes show an English error with Retry; form state preserved
-- [ ] Tests simulate offline reads and a failed-then-retried write
+- [x] Cold start offline shows the last synced data
+- [x] Daily refresh policy for vehicle data; records refreshed on app foreground when online
+- [x] Failed writes show an English error with Retry; form state preserved
+- [x] Tests simulate offline reads and a failed-then-retried write
 
 ## 12. Scanner foundation (QR mode)
 
