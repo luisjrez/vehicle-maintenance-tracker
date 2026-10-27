@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react-native';
-import { GarageScreen } from '@/features/garage/garage-screen';
+import { GarageScreen } from './garage-screen';
 import { useGarageStore } from '@/shared/store/garage-store';
 import { mmkvStorage } from '@/shared/store/mmkv-storage';
 import { recordFixture, vehicleFixture } from '@/test/fixtures';
 import { resetGarageStore } from '@/test/store';
-import { syncGarage } from './use-garage-sync';
+import { syncGarage } from '@/shared/sync/use-garage-sync';
 
 describe('offline browsing', () => {
   const fetchMock = jest.spyOn(globalThis, 'fetch');

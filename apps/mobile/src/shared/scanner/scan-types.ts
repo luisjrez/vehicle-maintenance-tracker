@@ -10,3 +10,7 @@ export type ScanFrame = { barcodes: ScannedBarcode[]; lines: ScannedTextLine[]; 
 
 /** What the caller knows that helps rank readings (ADR-0007 bounds for the date being logged). */
 export type ScanContext = { odometerBounds?: { min: number; max: number | null } };
+
+export function isScanMode(value: unknown): value is ScanMode {
+  return value === 'vin' || value === 'odometer' || value === 'qr';
+}

@@ -9,7 +9,7 @@ export const ODOMETER_MAX = 9_999_999;
 export const MAX_VEHICLES_PER_OWNER = 20;
 /** The first gasoline car is from 1886; next year's models are sold this year. */
 export const MIN_MODEL_YEAR = 1886;
-export const maxModelYear = (now: Date = new Date()): number => now.getFullYear() + 2;
+export const maxModelYear = (now: Date = new Date()): number => now.getFullYear() + 1;
 
 export const odometerSchema = z
   .number({ error: 'Enter the odometer in whole miles.' })
