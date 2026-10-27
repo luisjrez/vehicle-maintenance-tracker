@@ -38,6 +38,8 @@ services:
     environment:
       DATABASE_URL: postgresql://vmt:vmt@postgres:5432/vmt
       PORT: "3020"
+      # Local only. Changing it later orphans every Owner created with the old value.
+      DEVICE_ID_HASH_SECRET: ${DEVICE_ID_HASH_SECRET:-local-compose-secret-not-for-production}
     ports:
       - "3020:3020"
     depends_on:
