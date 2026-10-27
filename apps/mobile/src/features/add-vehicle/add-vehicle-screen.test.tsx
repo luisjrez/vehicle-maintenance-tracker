@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { useScanRequestStore } from '@/shared/scanner/scan-request-store';
 import { useGarageStore } from '@/shared/store/garage-store';
 import { vehicleFixture } from '@/test/fixtures';
 import { jsonResponse, requestBody } from '@/test/http';
@@ -183,5 +184,39 @@ describe('AddVehicleScreen offline', () => {
     expect(requestBody(1)).toEqual(requestBody(0));
     expect(useGarageStore.getState().vehicles).toEqual([created]);
     expect(routerMock.back).toHaveBeenCalled();
+  });
+});
+
+describe('AddVehicleScreen scanning', () => {
+  beforeEach(() => {
+    resetGarageStore();
+    resetRouterMock();
+    useScanRequestStore.getState().clear();
+  });
+
+  it('fills the editable VIN field from the scanner, then validates it like typed input', async () => {
+    await render(<AddVehicleScreen />);
+
+    await fireEvent.press(screen.getByTestId('vin-scan'));
+    expect(routerMock.push).toHaveBeenCalledWith({ pathname: '/scanner', params: { mode: 'vin' } });
+    await act(async () => {
+      useScanRequestStore.getState().deliver('1HGCM82633A004352');
+    });
+
+    expect(screen.getByTestId('vin-input')).toHaveDisplayValue('1HGCM82633A004352');
+    expect(screen.getByTestId('vin-valid')).toBeTruthy();
+    expect(screen.getByText(/Scanned — check it matches the car/)).toBeTruthy();
+  });
+
+  it('fills the initial odometer from the scanner', async () => {
+    await render(<AddVehicleScreen />);
+    await skipVin();
+
+    await fireEvent.press(screen.getByTestId('vehicle-initial-odometer-scan'));
+    await act(async () => {
+      useScanRequestStore.getState().deliver('48210');
+    });
+
+    expect(screen.getByTestId('vehicle-initial-odometer')).toHaveDisplayValue('48210');
   });
 });

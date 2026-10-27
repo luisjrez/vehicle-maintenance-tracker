@@ -1,13 +1,13 @@
 import { create } from 'zustand';
-import type { ScanMode } from './scan-types';
+import type { ScanContext, ScanMode } from './scan-types';
 
-type ScanRequest = { id: number; mode: ScanMode };
+type ScanRequest = { id: number; mode: ScanMode; context: ScanContext };
 type ScanResult = { requestId: number; mode: ScanMode; value: string };
 
 type ScanRequestState = {
   request: ScanRequest | null;
   result: ScanResult | null;
-  open: (mode: ScanMode) => number;
+  open: (mode: ScanMode, context?: ScanContext) => number;
   deliver: (value: string) => void;
   clear: () => void;
 };
@@ -21,9 +21,9 @@ let nextId = 0;
 export const useScanRequestStore = create<ScanRequestState>()((set, get) => ({
   request: null,
   result: null,
-  open: (mode) => {
+  open: (mode, context = {}) => {
     nextId += 1;
-    set({ request: { id: nextId, mode }, result: null });
+    set({ request: { id: nextId, mode, context }, result: null });
     return nextId;
   },
   deliver: (value) => {

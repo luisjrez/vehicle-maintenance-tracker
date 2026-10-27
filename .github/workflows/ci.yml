@@ -28,6 +28,12 @@ jobs:
       - run: bun run lint
       - run: bun run typecheck
       - run: bun run test
+      # Jest skips Babel's worklets plugin; a real Metro bundle catches what it misses.
+      - name: Bundle the mobile app with Metro
+        run: bunx expo export --platform ios --platform android --output-dir /tmp/expo-export
+        working-directory: apps/mobile
+        env:
+          CI: "1"
 
   api-integration:
     name: API integration tests (Postgres)

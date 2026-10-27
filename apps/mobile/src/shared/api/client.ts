@@ -3,6 +3,7 @@ import type { z } from 'zod';
 import { DEVICE_ID_HEADER } from '@vmt/shared';
 import { getDeviceId } from '../device/device-id';
 import { resolveApiBaseUrl } from './base-url';
+import { strings } from '../strings';
 import { ApiError, parseErrorBody } from './api-error';
 
 export const apiBaseUrl = resolveApiBaseUrl({
@@ -39,7 +40,10 @@ export async function apiRequest<T>(path: string, schema: z.ZodType<T>, options:
 
   const payload: unknown = response.status === 204 ? undefined : await response.json().catch(() => undefined);
   if (!response.ok) {
-    throw new ApiError({ kind: 'http', status: response.status, ...parseErrorBody(payload) });
+    const body = parseErrorBody(payload);
+    // Server faults carry no message meant for the Owner.
+    const message = response.status >= 500 ? strings.errors.unexpected : body.message;
+    throw new ApiError({ kind: 'http', status: response.status, ...body, message });
   }
   return schema.parse(payload);
 }

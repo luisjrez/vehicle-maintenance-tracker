@@ -10,13 +10,15 @@ type Props = {
   vin: string;
   feedback: VinFeedback;
   onChangeVin: (value: string) => void;
+  onScan: () => void;
+  scanned: boolean;
   onLookUp: () => void;
   onWithoutVin: () => void;
   lookingUp: boolean;
   lookupError: string | null;
 };
 
-export function VinStep({ vin, feedback, onChangeVin, onLookUp, onWithoutVin, lookingUp, lookupError }: Props) {
+export function VinStep({ vin, feedback, onChangeVin, onScan, scanned, onLookUp, onWithoutVin, lookingUp, lookupError }: Props) {
   const t = strings.addVehicle;
   return (
     <View testID="vin-step" style={styles.step}>
@@ -30,6 +32,8 @@ export function VinStep({ vin, feedback, onChangeVin, onLookUp, onWithoutVin, lo
         autoCorrect={false}
         maxLength={24}
         error={feedback.state === 'invalid' ? feedback.message : undefined}
+        hint={scanned ? strings.scan.checkVin : undefined}
+        action={{ title: strings.scan.action, onPress: onScan, testID: 'vin-scan' }}
       />
       {feedback.state === 'typing' ? <Text style={styles.hint}>{feedback.message}</Text> : null}
       {feedback.state === 'valid' ? (

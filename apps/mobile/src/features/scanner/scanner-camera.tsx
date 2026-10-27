@@ -1,10 +1,24 @@
 // The only module that touches VisionCamera and ML Kit (ADR-0006). Jest replaces
 // it with a JS mock (see jest.setup.ts), and a custom native module could
 // replace it without changing the scanner screen.
-import { useCallback } from 'react';
+import { type RefObject, useCallback, useImperativeHandle } from 'react';
 import { Linking, StyleSheet } from 'react-native';
-import { Camera, CommonResolutions, useCameraDevice, useCameraPermission, useFrameOutput } from 'react-native-vision-camera';
-import { type BarcodeFormat, useBarcodeScanning, useTextRecognition } from 'react-native-vision-camera-mlkit';
+import {
+  Camera,
+  CommonResolutions,
+  useCameraDevice,
+  useCameraPermission,
+  useFrameOutput,
+  usePhotoOutput,
+} from 'react-native-vision-camera';
+import {
+  type BarcodeFormat,
+  processImageBarcodeScanning,
+  processImageTextRecognition,
+  type TextRecognitionResult,
+  useBarcodeScanning,
+  useTextRecognition,
+} from 'react-native-vision-camera-mlkit';
 import { scheduleOnRN } from 'react-native-worklets';
 import type { ScanFrame, ScanMode, ScannedBarcode, ScannedTextLine } from '@/shared/scanner/scan-types';
 
@@ -25,24 +39,64 @@ export function useScannerPermission(): ScannerPermission {
   return { granted: hasPermission, canAsk: canRequestPermission, ask: requestPermission, openSettings };
 }
 
+/** Takes a full-resolution still and reads it once: the shutter fallback. */
+export type ScannerCapture = { capture: () => Promise<ScanFrame | null> };
+
 type Props = {
   mode: ScanMode;
   torch: boolean;
   active: boolean;
-  onFrame: (frame: ScanFrame) => void;
+  onScanFrame: (frame: ScanFrame) => void;
+  captureRef: RefObject<ScannerCapture | null>;
 };
+
+function textLines(result: TextRecognitionResult): ScannedTextLine[] {
+  return result.blocks.flatMap((block) =>
+    block.lines.map((line) => ({
+      text: line.text,
+      top: line.bounds.top,
+      left: line.bounds.left,
+      width: line.bounds.width,
+      height: line.bounds.height,
+    })),
+  );
+}
 
 /** False on devices without a back camera, such as the iOS simulator. */
 export function useBackCameraAvailable(): boolean {
   return useCameraDevice('back') !== undefined;
 }
 
-export function ScannerCamera({ mode, torch, active, onFrame }: Props) {
+export function ScannerCamera({ mode, torch, active, onScanFrame, captureRef }: Props) {
   const device = useCameraDevice('back');
   const { barcodeScanning } = useBarcodeScanning({ formats: mode === 'qr' ? QR_FORMATS : VIN_FORMATS });
   const { textRecognition } = useTextRecognition({ language: 'LATIN' });
   const wantsBarcodes = mode !== 'odometer';
   const wantsText = mode !== 'qr';
+  const photoOutput = usePhotoOutput({ qualityPrioritization: 'speed' });
+
+  useImperativeHandle(
+    captureRef,
+    () => ({
+      capture: async () => {
+        try {
+          const { filePath } = await photoOutput.capturePhotoToFile({ enableShutterSound: false }, {});
+          const uri = filePath.startsWith('file://') ? filePath : `file://${filePath}`;
+          const [text, codes] = await Promise.all([
+            wantsText ? processImageTextRecognition(uri, { language: 'LATIN' }) : Promise.resolve(null),
+            wantsBarcodes ? processImageBarcodeScanning(uri, { formats: mode === 'qr' ? QR_FORMATS : VIN_FORMATS }) : Promise.resolve(null),
+          ]);
+          const barcodes = (codes?.barcodes ?? []).flatMap((code): ScannedBarcode[] =>
+            code.rawValue === null ? [] : [{ format: code.formatName, value: code.rawValue }],
+          );
+          return { barcodes, lines: text === null ? [] : textLines(text), frameWidth: 0, frameHeight: 0 };
+        } catch {
+          return null;
+        }
+      },
+    }),
+    [photoOutput, wantsText, wantsBarcodes, mode],
+  );
 
   const frameOutput = useFrameOutput({
     targetResolution: CommonResolutions.HD_16_9,
@@ -72,7 +126,7 @@ export function ScannerCamera({ mode, torch, active, onFrame }: Props) {
             }
           }
         }
-        scheduleOnRN(onFrame, { barcodes, lines, frameWidth: frame.width, frameHeight: frame.height });
+        scheduleOnRN(onScanFrame, { barcodes, lines, frameWidth: frame.width, frameHeight: frame.height });
       } catch {
         // Drop the frame; the next one will try again.
       } finally {
@@ -87,7 +141,7 @@ export function ScannerCamera({ mode, torch, active, onFrame }: Props) {
       style={StyleSheet.absoluteFill}
       device={device}
       isActive={active}
-      outputs={[frameOutput]}
+      outputs={[frameOutput, photoOutput]}
       torchMode={torch ? 'on' : 'off'}
     />
   );

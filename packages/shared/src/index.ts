@@ -14,3 +14,5 @@ export * from './service-record.js';
 export * from './odometer-consistency.js';
 export * from './spending.js';
 export * from './transfer.js';
+export * from './vin-scan.js';
+export * from './odometer-scan.js';

@@ -1,10 +1,12 @@
-import { PROVIDER_TYPE_LABELS, PROVIDER_TYPES, type ProviderType } from '@vmt/shared';
+import { odometerBounds, PROVIDER_TYPE_LABELS, PROVIDER_TYPES, type ProviderType } from '@vmt/shared';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Chip } from '@/components/chip';
 import { DateField } from '@/components/date-field';
 import { SectionHeader } from '@/components/section-header';
 import { TextField } from '@/components/text-field';
+import { useScanner } from '@/shared/scanner/use-scanner';
+import { useGarageStore } from '@/shared/store/garage-store';
 import { strings } from '@/shared/strings';
 import type { DraftErrors } from './draft-to-input';
 import { useLogWorkDraft } from '@/shared/log-work-draft/log-work-draft';
@@ -25,6 +27,27 @@ export function WhenStep({ errors }: Props) {
   const setDate = useCallback((value: string) => setField('date', value), [setField]);
   const setOdometer = useCallback((value: string) => setField('odometer', value), [setField]);
   const setProviderName = useCallback((value: string) => setField('providerName', value), [setField]);
+  const [scanned, setScanned] = useState(false);
+  const fillScannedOdometer = useCallback(
+    (value: string) => {
+      setField('odometer', value);
+      setScanned(true);
+    },
+    [setField],
+  );
+  const scanOdometer = useScanner('odometer', fillScannedOdometer);
+  const openOdometerScanner = useCallback(() => {
+    // Rank readings by what fits the log for this date (ADR-0007); out-of-range ones are still shown.
+    const { vehicles, records } = useGarageStore.getState();
+    const { vehicleId, recordId, date: draftDate } = useLogWorkDraft.getState();
+    const vehicle = vehicles.find((candidate) => candidate.id === vehicleId);
+    const bounds =
+      vehicle === undefined
+        ? undefined
+        : odometerBounds(vehicle, records.filter((record) => record.vehicleId === vehicle.id), draftDate, recordId ?? undefined);
+    scanOdometer({ odometerBounds: bounds });
+  }, [scanOdometer]);
+
   const toggleProviderType = useCallback(
     (value: ProviderType) => setProviderType(providerType === value ? null : value),
     [providerType, setProviderType],
@@ -42,6 +65,8 @@ export function WhenStep({ errors }: Props) {
         keyboardType="number-pad"
         maxLength={9}
         error={errors.odometer}
+        hint={scanned ? strings.scan.checkIt : undefined}
+        action={{ title: strings.scan.action, onPress: openOdometerScanner, testID: 'log-work-odometer-scan' }}
       />
       <SectionHeader title={t.provider} />
       <TextField testID="log-work-provider-name" label={t.providerName} value={providerName} onChangeText={setProviderName} error={errors.providerName} />

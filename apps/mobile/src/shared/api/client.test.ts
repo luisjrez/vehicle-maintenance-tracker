@@ -32,4 +32,15 @@ describe('apiRequest', () => {
 
     expect(failure instanceof ApiError ? failure.failure.kind : null).toBe('network');
   });
+
+  it('hides raw server errors behind a friendly message', async () => {
+    getDeviceIdMock.mockResolvedValue('9b1deb4d3b7d4bad');
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ statusCode: 500, message: 'Internal server error' }), { status: 500 }),
+    );
+
+    const failure = await apiRequest('/v1/owner', z.unknown()).catch((error: unknown) => error);
+
+    expect(failure instanceof ApiError ? failure.message : null).toBe('Something went wrong. Please try again.');
+  });
 });

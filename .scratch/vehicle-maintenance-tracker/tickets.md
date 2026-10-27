@@ -163,57 +163,57 @@ Status: done
 
 ## 12. Scanner foundation (QR mode)
 
-Status: ready-for-agent
+Status: ready-for-human
 
 **What to build:** A full-screen scanner modal with a VIN / Odometer / Transfer QR segmented control, guide box per mode, torch toggle and "Type it instead", built on VisionCamera 5.2.3 + react-native-vision-camera-mlkit 2.0.1 (exact pins, ML Kit bundled on Android, non-Latin text models off, `android.builtInKotlin=false`). This ticket makes QR mode work end-to-end with a debug entry point; other modes show a placeholder (ADR-0006).
 
 **Blocked by:** 2. Mobile walking skeleton
 
-- [ ] One camera session; frame processors never throw; camera permission flow with clear copy
-- [ ] QR mode returns the decoded value to the caller; nothing auto-saves
-- [ ] Builds on iOS device + x86_64 simulator and Android; known arm64-simulator limitation documented
-- [ ] Scanner behind a JS mock so jest-expo tests run without a camera
+- [x] One camera session; frame processors never throw; camera permission flow with clear copy
+- [x] QR mode returns the decoded value to the caller; nothing auto-saves
+- [x] Builds on iOS device + x86_64 simulator and Android; known arm64-simulator limitation documented (README → Scanner)
+- [x] Scanner behind a JS mock so jest-expo tests run without a camera
 - [ ] Checked on a physical iPhone
 
 ## 13. Transfer to another phone
 
-Status: ready-for-agent
+Status: done
 
 **What to build:** Settings → "Transfer to another phone" shows a QR with a countdown for a single-use, 10-minute transfer code ("Generate a new code" invalidates the previous one) and warns that this phone will lose access. On the new phone, "Receive from another phone" (Settings or the empty state) scans it; if that phone already has data, a red warning states how many vehicles will be deleted and asks for confirmation. Redeeming moves the Owner to the new Device and revokes the old one (ADR-0001).
 
 **Blocked by:** 3. Device identity, 12. Scanner foundation (QR mode)
 
-- [ ] Issue/redeem endpoints; codes stored hashed; expired/used/superseded codes rejected
-- [ ] Redeem without confirmation on a phone with data → conflict response with the vehicle count
-- [ ] After redeem: new phone sees the data; old phone's next request starts a fresh empty Owner
-- [ ] Settings screen with both entries and the "no account" explanation
-- [ ] Integration tests for move semantics, replacement and expiry
+- [x] Issue/redeem endpoints; codes stored hashed; expired/used/superseded codes rejected
+- [x] Redeem without confirmation on a phone with data → conflict response with the vehicle count
+- [x] After redeem: new phone sees the data; old phone's next request starts a fresh empty Owner
+- [x] Settings screen with both entries and the "no account" explanation
+- [x] Integration tests for move semantics, replacement and expiry
 
 ## 14. Live VIN scanning
 
-Status: ready-for-agent
+Status: ready-for-human
 
 **What to build:** The scanner's VIN mode reads the windshield VIN plate (live text) and the door-jamb barcode (Code 39 / Code 128 / Data Matrix, stripping a leading "I"), steering the user to the door-jamb sticker first. Candidates are normalized and corrected (I→1, O/Q→0, digits forced in positions 13–17, ambiguous substitutions kept only when the check digit passes) and voted across frames; the result fills the editable VIN field in the add-vehicle modal.
 
 **Blocked by:** 5. Add a vehicle by VIN, 12. Scanner foundation (QR mode)
 
-- [ ] Candidate correction + per-character voting as pure functions in the shared package, built test-first with realistic misreads
-- [ ] Barcode path short-circuits OCR when it yields a valid VIN
-- [ ] Shutter fallback; "Type it instead" returns to the field
-- [ ] Owner always confirms; value goes through the same validator
+- [x] Candidate correction + per-character voting as pure functions in the shared package, built test-first with realistic misreads
+- [x] Barcode path short-circuits OCR when it yields a valid VIN
+- [x] Shutter fallback; "Type it instead" returns to the field
+- [x] Owner always confirms; value goes through the same validator
 - [ ] Checked on a physical iPhone against a real windshield plate and door-jamb sticker
 
 ## 15. Live odometer scanning
 
-Status: ready-for-agent
+Status: ready-for-human
 
 **What to build:** The scanner's Odometer mode (wide 2:1 guide, torch off by default) proposes the odometer value: prefers numbers next to ODO / mi / miles, ignores TRIP, temperature, clock, range, mpg and %, drops tenths, ranks by plausibility against the consistency bounds without hiding candidates, and locks when stable (≥3 frames, ≥60 % of ~1.5 s; two close candidates → offer both). After ~6 s without a lock it offers typing or a photo; "km" next to the number → warn and offer conversion to miles. Available from the add-vehicle initial odometer and the wizard's step 2.
 
 **Blocked by:** 8. Odometer consistency, 12. Scanner foundation (QR mode)
 
-- [ ] Candidate picker and stability lock as pure functions in the shared package, built test-first
-- [ ] km detection + confirmed conversion; bounds 0–9,999,999
-- [ ] Result fills the editable odometer field; consistency rule still applies
+- [x] Candidate picker and stability lock as pure functions in the shared package, built test-first
+- [x] km detection + confirmed conversion; bounds 0–9,999,999
+- [x] Result fills the editable odometer field; consistency rule still applies
 - [ ] Checked on a physical iPhone with at least one digital cluster
 
 ## 16. Abuse limits & production deploy

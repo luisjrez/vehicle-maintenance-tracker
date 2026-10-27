@@ -9,6 +9,7 @@ import { errorMessage } from '@/shared/api/api-error';
 import { createVehicle } from '@/shared/api/vehicles-api';
 import { decodeVin } from '@/shared/api/vin-api';
 import { fieldErrors } from '@/shared/forms/field-errors';
+import { useScanner } from '@/shared/scanner/use-scanner';
 import { useGarageStore } from '@/shared/store/garage-store';
 import { strings } from '@/shared/strings';
 import { colors } from '@/shared/ui/colors';
@@ -33,6 +34,25 @@ export function AddVehicleScreen() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const feedback = useMemo(() => vinFeedback(vinInput), [vinInput]);
+  const [scanned, setScanned] = useState<{ vin: boolean; odometer: boolean }>({ vin: false, odometer: false });
+
+  // A scanned value only fills the editable field; the Owner still reviews and saves (ADR-0006).
+  const fillScannedVin = useCallback((value: string) => {
+    setVinInput(value);
+    setScanned((current) => ({ ...current, vin: true }));
+  }, []);
+  const setInitialOdometer = setters.initialOdometer;
+  const fillScannedOdometer = useCallback(
+    (value: string) => {
+      setInitialOdometer(value);
+      setScanned((current) => ({ ...current, odometer: true }));
+    },
+    [setInitialOdometer],
+  );
+  const scanVin = useScanner('vin', fillScannedVin);
+  const scanOdometer = useScanner('odometer', fillScannedOdometer);
+  const openVinScanner = useCallback(() => scanVin(), [scanVin]);
+  const openOdometerScanner = useCallback(() => scanOdometer(), [scanOdometer]);
 
   const lookUp = useCallback(async () => {
     if (feedback.state !== 'valid') return;
@@ -102,6 +122,8 @@ export function AddVehicleScreen() {
           vin={vinInput}
           feedback={feedback}
           onChangeVin={setVinInput}
+          onScan={openVinScanner}
+          scanned={scanned.vin}
           onLookUp={handleLookUp}
           onWithoutVin={skipVin}
           lookingUp={lookingUp}
@@ -123,7 +145,13 @@ export function AddVehicleScreen() {
               <Button testID="add-vehicle-change-vin" title={strings.addVehicle.changeVin} variant="secondary" onPress={backToVin} />
             </Card>
           )}
-          <VehicleFormFields values={values} setters={setters} errors={errors} />
+          <VehicleFormFields
+            values={values}
+            setters={setters}
+            errors={errors}
+            onScanOdometer={openOdometerScanner}
+            odometerHint={scanned.odometer ? strings.scan.checkIt : undefined}
+          />
           <View style={styles.footer}>
             {saveError === null ? null : <ErrorBanner message={saveError} onRetry={handleSave} />}
             {errors.vin === undefined ? null : <ErrorBanner testID="add-vehicle-vin-error" message={errors.vin} />}

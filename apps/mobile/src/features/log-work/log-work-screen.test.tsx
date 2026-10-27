@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { useScanRequestStore } from '@/shared/scanner/scan-request-store';
 import { useGarageStore } from '@/shared/store/garage-store';
 import { recordFixture, vehicleFixture } from '@/test/fixtures';
 import { jsonResponse, requestBody } from '@/test/http';
@@ -141,5 +142,32 @@ describe('LogWorkScreen editing', () => {
     expect(fetchMock).toHaveBeenCalledWith(expect.stringMatching(/\/v1\/records\/record-1$/), expect.objectContaining({ method: 'PATCH' }));
     expect(requestBody(0)).toMatchObject({ totalCents: 5_500 });
     expect(useGarageStore.getState().records).toEqual([edited]);
+  });
+});
+
+describe('LogWorkScreen odometer scanning', () => {
+  beforeEach(() => {
+    resetGarageStore();
+    resetRouterMock();
+    useScanRequestStore.getState().clear();
+    useGarageStore.setState({
+      vehicles: [vehicleFixture({ id: 'vehicle-1', initialOdometer: 40_000, initialOdometerDate: '2026-01-10' })],
+      records: [recordFixture({ vehicleId: 'vehicle-1', date: '2026-06-01', odometer: 50_000 })],
+    });
+    useLogWorkDraft.getState().start({ vehicleId: 'vehicle-1', date: '2026-03-04' });
+  });
+
+  it('opens the scanner with the consistency bounds for the date and fills the field', async () => {
+    await render(<LogWorkScreen vehicleId="vehicle-1" />);
+    await fireEvent.press(screen.getByTestId('common-service-oil-change'));
+    await fireEvent.press(screen.getByTestId('log-work-next'));
+
+    await fireEvent.press(screen.getByTestId('log-work-odometer-scan'));
+
+    expect(useScanRequestStore.getState().request?.context).toEqual({ odometerBounds: { min: 40_000, max: 50_000 } });
+    await act(async () => {
+      useScanRequestStore.getState().deliver('45210');
+    });
+    expect(screen.getByTestId('log-work-odometer')).toHaveDisplayValue('45210');
   });
 });

@@ -16,10 +16,12 @@ export const QrCode = memo(function QrCode({ value, size, testID }: Props) {
     );
   }, [value]);
   const quiet = 4; // modules of white border scanners expect
-  const cell = size / (rows.length + quiet * 2);
+  // Whole-point cells: fractional sizes leave seams that break decoding.
+  const cell = Math.max(2, Math.floor(size / (rows.length + quiet * 2)));
+  const side = cell * (rows.length + quiet * 2);
 
   return (
-    <View testID={testID} accessibilityRole="image" style={[styles.frame, { width: size, height: size, padding: cell * quiet }]}>
+    <View testID={testID} accessibilityRole="image" style={[styles.frame, { width: side, height: side, padding: cell * quiet }]}>
       {rows.map((row, rowIndex) => (
         <View key={rowIndex} style={styles.row}>
           {row.map((dark, columnIndex) => (

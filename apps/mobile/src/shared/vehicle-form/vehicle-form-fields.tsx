@@ -5,7 +5,14 @@ import { strings } from '@/shared/strings';
 import type { FieldErrors, FieldSetters } from './use-vehicle-form';
 import type { VehicleFormValues } from './vehicle-form-values';
 
-type Props = { values: VehicleFormValues; setters: FieldSetters; errors: FieldErrors };
+type Props = {
+  values: VehicleFormValues;
+  setters: FieldSetters;
+  errors: FieldErrors;
+  /** Opens the scanner in odometer mode for the initial odometer. */
+  onScanOdometer?: () => void;
+  odometerHint?: string | undefined;
+};
 
 const labels = {
   bodyClass: 'Body class',
@@ -18,7 +25,7 @@ const labels = {
 } as const;
 
 /** Every editable vehicle field (ADR-0003: decoded details stay editable). */
-export function VehicleFormFields({ values, setters, errors }: Props) {
+export function VehicleFormFields({ values, setters, errors, onScanOdometer, odometerHint }: Props) {
   const t = strings.addVehicle;
   return (
     <View style={styles.form}>
@@ -36,7 +43,7 @@ export function VehicleFormFields({ values, setters, errors }: Props) {
       <TextField testID="vehicle-drive-type" label={labels.driveType} value={values.driveType} onChangeText={setters.driveType} error={errors.driveType} />
 
       <SectionHeader title={t.odometerSection} />
-      <TextField testID="vehicle-initial-odometer" label={t.initialOdometer} required value={values.initialOdometer} onChangeText={setters.initialOdometer} keyboardType="number-pad" maxLength={9} error={errors.initialOdometer} />
+      <TextField testID="vehicle-initial-odometer" label={t.initialOdometer} required value={values.initialOdometer} onChangeText={setters.initialOdometer} keyboardType="number-pad" maxLength={9} error={errors.initialOdometer} hint={odometerHint} action={onScanOdometer === undefined ? undefined : { title: strings.scan.action, onPress: onScanOdometer, testID: 'vehicle-initial-odometer-scan' }} />
 
       <SectionHeader title={t.personalSection} />
       <TextField testID="vehicle-nickname" label={t.nickname} value={values.nickname} onChangeText={setters.nickname} error={errors.nickname} />
