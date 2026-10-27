@@ -1,3 +1,4 @@
+import { formatDollarInput } from '@vmt/shared';
 import { useCallback } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { SectionHeader } from '@/components/section-header';
@@ -18,7 +19,7 @@ export function CostStep({ errors }: Props) {
   const setField = useLogWorkDraft((state) => state.setField);
   const updateLineItem = useLogWorkDraft((state) => state.updateLineItem);
 
-  const setTotal = useCallback((value: string) => setField('total', value), [setField]);
+  const setTotal = useCallback((value: string) => setField('total', formatDollarInput(value)), [setField]);
   const setNotes = useCallback((value: string) => setField('notes', value), [setField]);
 
   return (

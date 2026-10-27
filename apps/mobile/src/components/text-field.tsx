@@ -12,10 +12,12 @@ type Props = Pick<
   /** Neutral helper text under the input. */
   hint?: string | undefined;
   required?: boolean;
+  /** Fixed text inside the box before the value, e.g. "$". */
+  prefix?: string;
   testID: string;
 };
 
-export function TextField({ label, error, required = false, action, hint, testID, ...inputProps }: Props) {
+export function TextField({ label, error, required = false, action, hint, prefix, testID, ...inputProps }: Props) {
   return (
     <View style={styles.field}>
       <View style={styles.labelRow}>
@@ -29,13 +31,16 @@ export function TextField({ label, error, required = false, action, hint, testID
           </Pressable>
         )}
       </View>
-      <TextInput
-        testID={testID}
-        accessibilityLabel={label}
-        placeholderTextColor={colors.secondaryLabel}
-        style={[styles.input, error !== undefined && styles.inputError]}
-        {...inputProps}
-      />
+      <View style={[styles.box, error !== undefined && styles.inputError]}>
+        {prefix === undefined ? null : <Text style={styles.prefix}>{prefix}</Text>}
+        <TextInput
+          testID={testID}
+          accessibilityLabel={label}
+          placeholderTextColor={colors.secondaryLabel}
+          style={styles.input}
+          {...inputProps}
+        />
+      </View>
       {hint === undefined || error !== undefined ? null : <Text style={styles.hint}>{hint}</Text>}
       {error === undefined ? null : (
         <Text testID={`${testID}-error`} selectable style={styles.error}>
@@ -52,15 +57,18 @@ const styles = StyleSheet.create({
   label: { fontSize: 13, color: colors.secondaryLabel, fontWeight: '500' },
   action: { fontSize: 15, color: colors.tint, fontWeight: '600' },
   hint: { fontSize: 13, color: colors.secondaryLabel },
-  input: {
+  box: {
+    flexDirection: 'row',
+    alignItems: 'center',
     minHeight: 46,
     borderRadius: 10,
     borderCurve: 'continuous',
     paddingHorizontal: 12,
-    fontSize: 17,
-    color: colors.label,
+    gap: 2,
     backgroundColor: colors.card,
   },
+  prefix: { fontSize: 17, color: colors.secondaryLabel },
+  input: { flex: 1, minHeight: 46, fontSize: 17, color: colors.label },
   inputError: { borderWidth: 1, borderColor: colors.destructive },
   error: { fontSize: 13, color: colors.destructive },
 });

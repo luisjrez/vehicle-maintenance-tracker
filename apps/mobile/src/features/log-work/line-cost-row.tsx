@@ -1,4 +1,4 @@
-import { lineItemName, SCHEDULED_MAINTENANCE_SLUG } from '@vmt/shared';
+import { formatDollarInput, lineItemName, SCHEDULED_MAINTENANCE_SLUG } from '@vmt/shared';
 import { useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { TextField } from '@/components/text-field';
@@ -15,7 +15,7 @@ type Props = {
 
 export function LineCostRow({ item, index, errors, onChange }: Props) {
   const t = strings.logWork;
-  const setCost = useCallback((value: string) => onChange(item.key, 'cost', value), [onChange, item.key]);
+  const setCost = useCallback((value: string) => onChange(item.key, 'cost', formatDollarInput(value)), [onChange, item.key]);
   const setNotes = useCallback((value: string) => onChange(item.key, 'notes', value), [onChange, item.key]);
   const setPackage = useCallback((value: string) => onChange(item.key, 'packageCode', value), [onChange, item.key]);
 
@@ -25,7 +25,7 @@ export function LineCostRow({ item, index, errors, onChange }: Props) {
       {item.serviceSlug === SCHEDULED_MAINTENANCE_SLUG ? (
         <TextField testID={`line-package-${index}`} label={t.packageCode} value={item.packageCode} onChangeText={setPackage} error={errors[`lineItems.${index}.packageCode`]} />
       ) : null}
-      <TextField testID={`line-cost-${index}`} label={t.lineCost} value={item.cost} onChangeText={setCost} keyboardType="decimal-pad" placeholder="$0.00" error={errors[`lineItems.${index}.costCents`]} />
+      <TextField testID={`line-cost-${index}`} label={t.lineCost} value={item.cost} onChangeText={setCost} keyboardType="decimal-pad" prefix="$" placeholder="0.00" error={errors[`lineItems.${index}.costCents`]} />
       <TextField testID={`line-notes-${index}`} label={t.lineNotes} value={item.notes} onChangeText={setNotes} error={errors[`lineItems.${index}.notes`]} />
     </View>
   );

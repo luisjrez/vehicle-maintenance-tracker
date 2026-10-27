@@ -66,6 +66,24 @@ describe('LogWorkScreen', () => {
     expect(routerMock.back).toHaveBeenCalled();
   });
 
+  it('formats money in dollars while it is typed and saves it as cents', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(201, recordFixture({ vehicleId: vehicle.id })));
+    await render(<LogWorkScreen vehicleId={vehicle.id} />);
+    await fireEvent.press(screen.getByTestId('common-service-oil-change'));
+    await fireEvent.press(screen.getByTestId('log-work-next'));
+    await fireEvent.press(screen.getByTestId('log-work-next'));
+
+    await fireEvent.changeText(screen.getByTestId('log-work-total'), '1234.5');
+    await fireEvent.changeText(screen.getByTestId('line-cost-0'), '1000');
+
+    expect(screen.getByTestId('log-work-total')).toHaveDisplayValue('1,234.5');
+    expect(screen.getByTestId('line-cost-0')).toHaveDisplayValue('1,000');
+
+    await fireEvent.press(screen.getByTestId('log-work-save'));
+
+    expect(requestBody(0)).toMatchObject({ totalCents: 123_450, lineItems: [{ serviceSlug: 'oil-change', costCents: 100_000 }] });
+  });
+
   it('keeps everything typed when the save fails, and retries', async () => {
     fetchMock.mockRejectedValueOnce(new TypeError('Network request failed'));
     fetchMock.mockResolvedValueOnce(jsonResponse(201, recordFixture({ vehicleId: vehicle.id })));
