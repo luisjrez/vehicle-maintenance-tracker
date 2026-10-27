@@ -10,7 +10,10 @@ export class OwnerController {
 
   @Get()
   async summary(@CurrentOwner() owner: OwnerContext): Promise<OwnerSummary> {
-    const row = await this.prisma.owner.findUniqueOrThrow({ where: { id: owner.ownerId } });
-    return { createdAt: row.createdAt.toISOString() };
+    const row = await this.prisma.owner.findUniqueOrThrow({
+      where: { id: owner.ownerId },
+      include: { _count: { select: { vehicles: true } } },
+    });
+    return { createdAt: row.createdAt.toISOString(), vehicleCount: row._count.vehicles };
   }
 }

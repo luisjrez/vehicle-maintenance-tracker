@@ -20,9 +20,10 @@ type RequestOptions = {
  * app never trusts a payload shape it did not check.
  */
 export async function apiRequest<T>(path: string, schema: z.ZodType<T>, options: RequestOptions = {}): Promise<T> {
+  // Outside the try: a Keychain failure is not "offline" and must not be reported as such.
+  const deviceId = await getDeviceId();
   let response: Response;
   try {
-    const deviceId = await getDeviceId();
     response = await fetch(`${apiBaseUrl}${path}`, {
       method: options.method ?? 'GET',
       headers: {

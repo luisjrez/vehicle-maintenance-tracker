@@ -3,10 +3,16 @@
   "compilerOptions": {
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "lib": ["ES2023"],
-    "types": [],
+    "lib": [
+      "ES2023"
+    ],
+    "types": [
+      "vitest/globals"
+    ],
     "rootDir": "./src",
     "outDir": "./dist"
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }

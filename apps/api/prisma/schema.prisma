@@ -14,7 +14,8 @@ model Owner {
   id        String   @id @default(uuid(7)) @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  devices Device[]
+  devices  Device[]
+  vehicles Vehicle[]
 
   @@map("owners")
 }
@@ -31,4 +32,51 @@ model Device {
 
   @@index([ownerId])
   @@map("devices")
+}
+
+/// A car belonging to an Owner. Decoded VIN details are copied in and stay
+/// editable; current mileage is derived from readings, never stored (ADR-0007).
+model Vehicle {
+  id                  String   @id @default(uuid(7)) @db.Uuid
+  ownerId             String   @map("owner_id") @db.Uuid
+  vin                 String?  @db.Char(17)
+  year                Int      @db.SmallInt
+  make                String
+  model               String
+  trim                String?
+  bodyClass           String?  @map("body_class")
+  vehicleType         String?  @map("vehicle_type")
+  fuelType            String?  @map("fuel_type")
+  electrification     String?
+  cylinders           Int?     @db.SmallInt
+  displacementL       Decimal? @map("displacement_l") @db.Decimal(4, 1)
+  driveType           String?  @map("drive_type")
+  nickname            String?
+  plate               String?
+  plateState          String?  @map("plate_state") @db.Char(2)
+  color               String?
+  initialOdometer     Int      @map("initial_odometer")
+  initialOdometerDate DateTime @map("initial_odometer_date") @db.Date
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  owner Owner @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // VIN is unique per Owner only (ADR-0003); NULLs never collide in Postgres.
+  @@unique([ownerId, vin])
+  @@index([ownerId])
+  @@map("vehicles")
+}
+
+/// Shared vPIC decode cache, keyed by VIN and never linked to an Owner (ADR-0003).
+/// Decoded hits never expire; "no data" expires after ~24 h; outages are not cached.
+model VinDecodeCache {
+  vin       String    @id @db.Char(17)
+  status    String
+  details   Json
+  payload   Json
+  fetchedAt DateTime  @default(now()) @map("fetched_at") @db.Timestamptz(3)
+  expiresAt DateTime? @map("expires_at") @db.Timestamptz(3)
+
+  @@map("vin_decode_cache")
 }

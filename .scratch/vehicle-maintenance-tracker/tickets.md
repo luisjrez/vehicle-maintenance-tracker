@@ -36,14 +36,14 @@ Status: done
 
 ## 3. Device identity
 
-Status: ready-for-agent
+Status: done
 
 **What to build:** Every request from the app carries the Device ID — `ANDROID_ID` on Android, a Keychain-persisted random UUID on iOS. The API hashes it, never logs it, and creates the Owner and its Device implicitly the first time it sees an unknown Device ID; all later data is scoped to that Owner (ADR-0001). A base per-Device rate limit is in place.
 
 **Blocked by:** 1. API walking skeleton, 2. Mobile walking skeleton
 
 - [x] App obtains the Device ID per platform and sends it as `X-Device-Id` on every request
-- [ ] iOS: reinstalling the app keeps the same Device ID (Keychain); Android uses `ANDROID_ID`
+- [x] iOS: reinstalling the app keeps the same Device ID (Keychain); Android uses `ANDROID_ID` (verified on the iOS simulator: same device hash after uninstall/reinstall; physical iPhone pending)
 - [x] API rejects requests without a well-formed Device ID
 - [x] API stores only a hash; unknown Device ID → new Owner + Device; known → same Owner
 - [x] Device ID never appears in logs (verified by a test) or in the UI
@@ -52,34 +52,34 @@ Status: ready-for-agent
 
 ## 4. Add a vehicle manually + garage home
 
-Status: ready-for-agent
+Status: done
 
 **What to build:** The Owner adds a vehicle without a VIN (year, make, model, trim, required initial odometer, nickname, plate + state, color) from a modal and sees it on the Home screen: the vehicle-switcher carousel with an "Add" tile, the selected vehicle's summary card (current mileage, spend this year), and an empty state ("Add your first vehicle" / "I have data on another phone"). The Owner's data lives in a Zustand store persisted with MMKV and is synced from the API (ADR-0008).
 
 **Blocked by:** 3. Device identity
 
-- [ ] Vehicle table + create/list endpoints scoped to the Owner; Zod schemas shared by app and API
-- [ ] Initial odometer required (0–9,999,999), stamped with the creation date
-- [ ] Max 20 vehicles per Owner enforced by the API with a clear message
-- [ ] Home: carousel, selected vehicle summary, empty state; Settings button placeholder
-- [ ] Display name falls back to "<year> <make> <model>" when no nickname
-- [ ] Store persisted in MMKV; after a successful create the store updates from the API response
-- [ ] Integration tests for create/list/cap; component test for the empty state and carousel
+- [x] Vehicle table + create/list endpoints scoped to the Owner; Zod schemas shared by app and API
+- [x] Initial odometer required (0–9,999,999), stamped with the creation date
+- [x] Max 20 vehicles per Owner enforced by the API with a clear message
+- [x] Home: carousel, selected vehicle summary, empty state; Settings button placeholder
+- [x] Display name falls back to "<year> <make> <model>" when no nickname
+- [x] Store persisted in MMKV; after a successful create the store updates from the API response
+- [x] Integration tests for create/list/cap; component test for the empty state and carousel
 
 ## 5. Add a vehicle by VIN
 
-Status: ready-for-agent
+Status: done
 
 **What to build:** In the add-vehicle modal the Owner types or pastes a VIN, gets live validation (normalize; 17 chars; no I/O/Q; valid year code; check digit), and on a valid VIN looks it up: our API decodes it through NHTSA vPIC with a shared server-side cache, the Owner reviews and edits all decoded details, and saves. Invalid VIN → "Add without VIN"; vPIC down or no data → prefilled manual form; never blocks (ADR-0003).
 
 **Blocked by:** 4. Add a vehicle manually + garage home
 
-- [ ] VIN normalizer + validator in the shared package, built test-first (valid, wrong check digit, I/O/Q, length, year code)
-- [ ] `GET /v1/vin/:vin` interprets vPIC `ErrorCode`s; caches hits indefinitely, "no data" ~24 h, never caches outages
-- [ ] Decoded fields kept: make, model, year, trim, body class, vehicle type, fuel/electrification, cylinders, displacement, drive — all editable before saving
-- [ ] VIN unique per Owner (not global); duplicate within the same Owner rejected clearly
-- [ ] VIN decode throttled per Device (~30/hour)
-- [ ] vPIC mocked in integration tests; one contract test against recorded real responses
+- [x] VIN normalizer + validator in the shared package, built test-first (valid, wrong check digit, I/O/Q, length, year code)
+- [x] `GET /v1/vin/:vin` interprets vPIC `ErrorCode`s; caches hits indefinitely, "no data" ~24 h, never caches outages
+- [x] Decoded fields kept: make, model, year, trim, body class, vehicle type, fuel/electrification, cylinders, displacement, drive — all editable before saving
+- [x] VIN unique per Owner (not global); duplicate within the same Owner rejected clearly
+- [x] VIN decode throttled per Device (~30/hour)
+- [x] vPIC mocked in integration tests; one contract test against recorded real responses
 
 ## 6. Vehicle details: edit & delete
 

@@ -1,17 +1,21 @@
-import { Stack } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
-import { ApiHealthStatus } from '@/features/health/api-health-status';
+import { Stack, useRouter } from 'expo-router';
+import { useCallback } from 'react';
+import { HeaderButton } from '@/components/header-button';
+import { GarageScreen } from '@/features/garage/garage-screen';
 import { strings } from '@/shared/strings';
 
-export default function HomeScreen() {
+export default function HomeRoute() {
+  const router = useRouter();
+  const openSettings = useCallback(() => router.push('/settings'), [router]);
+  const headerRight = useCallback(
+    () => <HeaderButton testID="open-settings" title={strings.garage.settings} onPress={openSettings} />,
+    [openSettings],
+  );
+
   return (
-    <View style={styles.screen}>
-      <Stack.Screen options={{ title: strings.appName }} />
-      <ApiHealthStatus />
-    </View>
+    <>
+      <Stack.Screen options={{ headerRight }} />
+      <GarageScreen />
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-});

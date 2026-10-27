@@ -6,9 +6,11 @@ import { ConfigModule } from './config/config.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { DevicesModule } from './devices/devices.module.js';
 import { HealthModule } from './health/health.module.js';
+import { VehiclesModule } from './vehicles/vehicles.module.js';
+import { VinModule } from './vin/vin.module.js';
 
 @Module({
-  imports: [ConfigModule, DatabaseModule, DevicesModule, HealthModule],
+  imports: [ConfigModule, DatabaseModule, DevicesModule, HealthModule, VehiclesModule, VinModule],
   providers: [{ provide: APP_FILTER, useClass: DomainErrorFilter }],
 })
 export class AppModule implements NestModule {

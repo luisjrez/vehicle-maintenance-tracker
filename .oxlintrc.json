@@ -35,7 +35,16 @@
       }
     ],
     "typescript/no-non-null-assertion": "error",
-    "react-perf/jsx-no-new-function-as-prop": "error"
+    "react-perf/jsx-no-new-function-as-prop": "error",
+    "eslint/no-underscore-dangle": [
+      "warn",
+      {
+        "allow": [
+          "_count",
+          "__dirname"
+        ]
+      }
+    ]
   },
   "ignorePatterns": [
     "**/dist/**",
