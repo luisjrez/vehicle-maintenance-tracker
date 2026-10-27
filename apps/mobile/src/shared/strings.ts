@@ -91,6 +91,20 @@ export const strings = {
     noDataNotice: "We couldn't find details for this VIN. Enter them below.",
     unavailableNotice: 'Vehicle lookup is unavailable right now. Enter the details below.',
   },
+  vehicleDetails: {
+    title: 'Vehicle details',
+    vinHint: 'Leave empty to remove the VIN.',
+    save: 'Save changes',
+    saved: 'Changes saved.',
+    delete: 'Delete vehicle',
+    confirmTitle: (name: string) => `Delete ${name}?`,
+    confirmBody: (records: number) =>
+      records === 0
+        ? 'This permanently deletes the vehicle. This cannot be undone.'
+        : `This permanently deletes the vehicle and its ${records} service ${records === 1 ? 'record' : 'records'}. This cannot be undone.`,
+    cancel: 'Cancel',
+    missing: 'This vehicle is no longer in your garage.',
+  },
   settings: {
     title: 'Settings',
   },

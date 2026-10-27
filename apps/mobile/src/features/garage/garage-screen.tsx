@@ -2,6 +2,7 @@ import { currentMileage } from '@vmt/shared';
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ListRow } from '@/components/list-row';
 import { SectionHeader } from '@/components/section-header';
 import { spentInYear } from '@/shared/spend';
 import { selectSelectedVehicle, useGarageStore } from '@/shared/store/garage-store';
@@ -26,6 +27,10 @@ export function GarageScreen() {
   const openAddVehicle = useCallback(() => router.push('/add-vehicle'), [router]);
   const openReceive = useCallback(() => router.push('/settings'), [router]);
   const openActions = useCallback(() => router.push('/actions'), [router]);
+  const selectedId = selected?.id;
+  const openDetails = useCallback(() => {
+    if (selectedId !== undefined) router.push({ pathname: '/vehicles/[vehicleId]', params: { vehicleId: selectedId } });
+  }, [router, selectedId]);
   const openRecord = useCallback((recordId: string) => router.push({ pathname: '/records/[recordId]', params: { recordId } }), [router]);
 
   if (vehicles.length === 0 || selected === undefined) {
@@ -53,6 +58,7 @@ export function GarageScreen() {
             spentThisYearCents={spentInYear(records, year)}
             year={year}
           />
+          <ListRow testID="vehicle-details-row" title={strings.garage.detailsRow} onPress={openDetails} />
           <SectionHeader title={strings.garage.history} />
           <HistoryList records={records} onOpen={openRecord} />
         </View>

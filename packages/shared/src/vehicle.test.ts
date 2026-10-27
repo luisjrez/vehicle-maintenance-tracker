@@ -1,4 +1,4 @@
-import { createVehicleSchema, vehicleDisplayName, ODOMETER_MAX } from './vehicle.js';
+import { createVehicleSchema, ODOMETER_MAX, updateVehicleSchema, vehicleDisplayName } from './vehicle.js';
 
 const valid = {
   year: 2019,
@@ -71,5 +71,21 @@ describe('createVehicleSchema VIN', () => {
     const result = createVehicleSchema.safeParse({ ...valid, vin: '1HGCM82633A004353' });
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.message).toMatch(/typos/);
+  });
+});
+
+describe('updateVehicleSchema', () => {
+  it('accepts partial edits and null to clear optional fields', () => {
+    expect(updateVehicleSchema.parse({ nickname: null, trim: 'LX', vin: null })).toEqual({ nickname: null, trim: 'LX', vin: null });
+  });
+
+  it('runs the same validation as creation', () => {
+    expect(updateVehicleSchema.safeParse({ vin: '1HGCM82633A004353' }).success).toBe(false);
+    expect(updateVehicleSchema.safeParse({ initialOdometer: -1 }).success).toBe(false);
+    expect(updateVehicleSchema.safeParse({ make: '' }).success).toBe(false);
+  });
+
+  it('rejects unknown fields such as the creation date', () => {
+    expect(updateVehicleSchema.safeParse({ initialOdometerDate: '2020-01-01' }).success).toBe(false);
   });
 });

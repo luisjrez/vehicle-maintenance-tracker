@@ -1,16 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { useGarageStore } from '@/shared/store/garage-store';
 import { recordFixture, vehicleFixture } from '@/test/fixtures';
-import { jsonResponse } from '@/test/http';
+import { jsonResponse, requestBody } from '@/test/http';
 import { resetRouterMock, routerMock } from '@/test/router-mock';
 import { resetGarageStore } from '@/test/store';
 import { useLogWorkDraft } from './log-work-draft';
 import { LogWorkScreen } from './log-work-screen';
-
-function requestBody(call: number): unknown {
-  const [, init] = jest.mocked(globalThis.fetch).mock.calls[call] ?? [];
-  return JSON.parse(typeof init?.body === 'string' ? init.body : '{}');
-}
 
 describe('LogWorkScreen', () => {
   const fetchMock = jest.spyOn(globalThis, 'fetch');

@@ -98,6 +98,35 @@ export const vehicleSchema = z.object({
 
 export type Vehicle = z.infer<typeof vehicleSchema>;
 
+/** Optional fields accept `null` to clear them; omitted fields stay as they are. */
+const clearable = <T extends z.ZodType>(schema: T) => schema.nullable().optional();
+
+/** PATCH body: every field is editable, decoded details and VIN included (ADR-0003). */
+export const updateVehicleSchema = z
+  .object({
+    vin: clearable(vinSchema),
+    year: vehicleDetailsShape.year.optional(),
+    make: vehicleDetailsShape.make.optional(),
+    model: vehicleDetailsShape.model.optional(),
+    trim: clearable(vehicleDetailsShape.trim),
+    bodyClass: clearable(vehicleDetailsShape.bodyClass),
+    vehicleType: clearable(vehicleDetailsShape.vehicleType),
+    fuelType: clearable(vehicleDetailsShape.fuelType),
+    electrification: clearable(vehicleDetailsShape.electrification),
+    cylinders: clearable(vehicleDetailsShape.cylinders),
+    displacementL: clearable(vehicleDetailsShape.displacementL),
+    driveType: clearable(vehicleDetailsShape.driveType),
+    nickname: clearable(vehicleDetailsShape.nickname),
+    plate: clearable(vehicleDetailsShape.plate),
+    plateState: clearable(vehicleDetailsShape.plateState),
+    color: clearable(vehicleDetailsShape.color),
+    initialOdometer: odometerSchema.optional(),
+  })
+  .strict();
+
+export type UpdateVehicleInput = z.input<typeof updateVehicleSchema>;
+export type UpdateVehicle = z.output<typeof updateVehicleSchema>;
+
 export const vehicleListSchema = z.array(vehicleSchema);
 
 export function vehicleDisplayName(vehicle: Pick<Vehicle, 'nickname' | 'year' | 'make' | 'model'>): string {

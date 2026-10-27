@@ -1,13 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { checkOdometerConsistency, type CreateRecord, type ServiceRecord } from '@vmt/shared';
 import { DomainError } from '../common/domain-error.js';
+import { vehicleNotFound } from '../common/not-found.js';
 import { fromIsoDate, toIsoDate } from '../common/dates.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { lineItemsInOrder, toRecordDto } from './record.mapper.js';
-
-export const vehicleNotFound = () =>
-  new DomainError(404, 'VEHICLE_NOT_FOUND', 'This vehicle no longer exists. Pull to refresh your garage.');
 
 /** Maps validated input to Prisma's nested line-item create, keeping the entry order. */
 export function lineItemRows(input: CreateRecord) {

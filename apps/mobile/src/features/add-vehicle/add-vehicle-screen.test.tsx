@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { useGarageStore } from '@/shared/store/garage-store';
 import { vehicleFixture } from '@/test/fixtures';
-import { jsonResponse } from '@/test/http';
+import { jsonResponse, requestBody } from '@/test/http';
 import { resetRouterMock, routerMock } from '@/test/router-mock';
 import { resetGarageStore } from '@/test/store';
 import { AddVehicleScreen } from './add-vehicle-screen';
@@ -49,9 +49,7 @@ describe('AddVehicleScreen', () => {
 
     await fireEvent.press(screen.getByTestId('add-vehicle-save'));
 
-    const [, init] = fetchMock.mock.calls[0] ?? [];
-    expect(typeof init?.body).toBe('string');
-    expect(JSON.parse(typeof init?.body === 'string' ? init.body : '{}')).toMatchObject({ year: 2019, make: 'Honda', model: 'Civic', initialOdometer: 47_750 });
+    expect(requestBody(0)).toMatchObject({ year: 2019, make: 'Honda', model: 'Civic', initialOdometer: 47_750 });
     expect(useGarageStore.getState().vehicles).toEqual([created]);
     expect(useGarageStore.getState().selectedVehicleId).toBe(created.id);
     expect(routerMock.back).toHaveBeenCalled();
@@ -125,8 +123,7 @@ describe('AddVehicleScreen', () => {
 
     await fireEvent.press(screen.getByTestId('add-vehicle-save'));
 
-    const [, init] = fetchMock.mock.calls[1] ?? [];
-    expect(JSON.parse(typeof init?.body === 'string' ? init.body : '{}')).toMatchObject({
+    expect(requestBody(1)).toMatchObject({
       vin: '1HGCM82633A004352',
       model: 'Accord Coupe',
       bodyClass: 'Coupe',

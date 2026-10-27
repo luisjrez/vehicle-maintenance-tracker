@@ -1,9 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { type CreateVehicle, daysBetween, MAX_VEHICLES_PER_OWNER, type Vehicle } from '@vmt/shared';
+import {
+  checkInitialOdometerEdit,
+  type CreateVehicle,
+  daysBetween,
+  MAX_VEHICLES_PER_OWNER,
+  type UpdateVehicle,
+  type Vehicle,
+} from '@vmt/shared';
 import { DomainError } from '../common/domain-error.js';
 import { Prisma } from '../generated/prisma/client.js';
-import { fromIsoDate, serverToday } from '../common/dates.js';
+import { fromIsoDate, serverToday, toIsoDate } from '../common/dates.js';
 import { PrismaService } from '../database/prisma.service.js';
+import { vehicleNotFound } from '../common/not-found.js';
 import { toVehicleDto } from './vehicle.mapper.js';
 
 @Injectable()
@@ -13,6 +21,45 @@ export class VehiclesService {
   async list(ownerId: string): Promise<Vehicle[]> {
     const rows = await this.prisma.vehicle.findMany({ where: { ownerId }, orderBy: { createdAt: 'asc' } });
     return rows.map(toVehicleDto);
+  }
+
+  async get(ownerId: string, vehicleId: string): Promise<Vehicle> {
+    const row = await this.prisma.vehicle.findFirst({ where: { id: vehicleId, ownerId } });
+    if (row === null) throw vehicleNotFound();
+    return toVehicleDto(row);
+  }
+
+  async update(ownerId: string, vehicleId: string, input: UpdateVehicle): Promise<Vehicle> {
+    const row = await this.prisma
+      .$transaction(async (tx) => {
+        const locked = await tx.$queryRaw<{ id: string }[]>`
+          SELECT id FROM vehicles WHERE id = ${vehicleId}::uuid AND owner_id = ${ownerId}::uuid FOR UPDATE`;
+        if (locked.length === 0) throw vehicleNotFound();
+        if (input.initialOdometer !== undefined) {
+          // The initial odometer is a reading on the creation date (ADR-0007); edits must keep the log coherent.
+          const vehicle = await tx.vehicle.findUniqueOrThrow({ where: { id: vehicleId } });
+          const records = await tx.serviceRecord.findMany({
+            where: { vehicleId, odometer: { not: null } },
+            select: { id: true, date: true, odometer: true },
+          });
+          const check = checkInitialOdometerEdit(
+            { initialOdometer: vehicle.initialOdometer, initialOdometerDate: toIsoDate(vehicle.initialOdometerDate) },
+            records.map((record) => ({ id: record.id, date: toIsoDate(record.date), odometer: record.odometer })),
+            input.initialOdometer,
+          );
+          if (!check.ok) throw new DomainError(422, 'ODOMETER_INCONSISTENT', check.message, { conflict: check.conflict });
+        }
+        // `undefined` leaves a column alone, `null` clears it — Prisma's own update semantics.
+        return tx.vehicle.update({ where: { id: vehicleId }, data: input });
+      })
+      .catch(rethrowDuplicateVin);
+    return toVehicleDto(row);
+  }
+
+  /** Hard delete; the database cascades to the vehicle's records (domain model: lifecycle). */
+  async remove(ownerId: string, vehicleId: string): Promise<void> {
+    const { count } = await this.prisma.vehicle.deleteMany({ where: { id: vehicleId, ownerId } });
+    if (count === 0) throw vehicleNotFound();
   }
 
   async create(ownerId: string, input: CreateVehicle): Promise<Vehicle> {

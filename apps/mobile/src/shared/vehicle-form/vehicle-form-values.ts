@@ -109,3 +109,26 @@ export function decodedToFormValues(details: DecodedVehicleDetails, yearCandidat
     driveType: text(details.driveType),
   };
 }
+
+const blankToNull = (value: string | undefined): string | null => (value === undefined || value.trim() === '' ? null : value);
+
+/** For PATCH: every field is sent, and blank optional fields become `null` so they are cleared. */
+export function formValuesToUpdate(values: VehicleFormValues, vin: string | null) {
+  const input = formValuesToInput(values);
+  return {
+    ...input,
+    vin,
+    trim: blankToNull(input.trim),
+    bodyClass: blankToNull(input.bodyClass),
+    vehicleType: blankToNull(input.vehicleType),
+    fuelType: blankToNull(input.fuelType),
+    electrification: blankToNull(input.electrification),
+    cylinders: input.cylinders ?? null,
+    displacementL: input.displacementL ?? null,
+    driveType: blankToNull(input.driveType),
+    nickname: blankToNull(input.nickname),
+    plate: blankToNull(input.plate),
+    plateState: input.plateState ?? null,
+    color: blankToNull(input.color),
+  };
+}

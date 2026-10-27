@@ -12,6 +12,7 @@ export default function RootLayout() {
       <Stack.Screen name="index" options={{ title: strings.garage.title, headerLargeTitle: true, headerShadowVisible: false }} />
       <Stack.Screen name="add-vehicle" options={{ title: strings.addVehicle.title, presentation: 'modal' }} />
       <Stack.Screen name="settings" options={{ title: strings.settings.title }} />
+      <Stack.Screen name="vehicles/[vehicleId]" options={{ title: strings.vehicleDetails.title }} />
       <Stack.Screen
         name="actions"
         options={{ presentation: 'formSheet', headerShown: false, sheetAllowedDetents: [0.38], sheetGrabberVisible: true }}

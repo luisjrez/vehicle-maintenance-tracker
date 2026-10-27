@@ -83,17 +83,17 @@ Status: done
 
 ## 6. Vehicle details: edit & delete
 
-Status: ready-for-agent
+Status: done
 
 **What to build:** From Home, "Vehicle details & VIN" opens a screen listing every vehicle field and decoded detail; the Owner edits any of them and can delete the vehicle, which hard-deletes it and all its service records after a native confirmation that states how many records will be lost.
 
 **Blocked by:** 4. Add a vehicle manually + garage home
 
-- [ ] Read/update/delete vehicle endpoints scoped to the Owner
-- [ ] All fields editable (including decoded details and VIN under the same validation)
-- [ ] Delete cascades to records; re-adding the same VIN afterwards works
-- [ ] Confirmation shows the record count; store updates after the API responds
-- [ ] Integration tests for edit, cascade delete and cross-Owner isolation
+- [x] Read/update/delete vehicle endpoints scoped to the Owner
+- [x] All fields editable (including decoded details and VIN under the same validation)
+- [x] Delete cascades to records; re-adding the same VIN afterwards works
+- [x] Confirmation shows the record count; store updates after the API responds
+- [x] Integration tests for edit, cascade delete and cross-Owner isolation
 
 ## 7. Log a service record
 
