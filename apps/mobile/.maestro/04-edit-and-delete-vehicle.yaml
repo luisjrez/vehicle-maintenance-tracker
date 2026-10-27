@@ -1,0 +1,41 @@
+appId: dev.luisjrez.maintenancetracker
+name: Rename a vehicle, then delete it
+env:
+  METRO_URL: http%3A%2F%2Flocalhost%3A8082
+---
+- runFlow: subflows/launch-fresh.yaml
+- runFlow: subflows/add-manual-vehicle.yaml
+- tapOn:
+    id: vehicle-details-row
+- scrollUntilVisible:
+    element:
+      id: vehicle-nickname
+    direction: DOWN
+- tapOn:
+    id: vehicle-nickname
+- inputText: Daily
+- runFlow: subflows/dismiss-keyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: vehicle-details-save
+    direction: DOWN
+- tapOn:
+    id: vehicle-details-save
+- extendedWaitUntil:
+    visible:
+      id: vehicle-details-saved
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: vehicle-details-delete
+    direction: DOWN
+- tapOn:
+    id: vehicle-details-delete
+# The screen's own button shares the label; the alert's sits right of Cancel.
+- tapOn:
+    text: Delete vehicle
+    rightOf: Cancel
+- extendedWaitUntil:
+    visible:
+      id: garage-empty
+    timeout: 15000

@@ -103,6 +103,7 @@ function VehicleDetailsForm({ vehicle }: { vehicle: Vehicle }) {
       style={styles.screen}
       contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
       contentContainerStyle={styles.content}
     >
       <TextField

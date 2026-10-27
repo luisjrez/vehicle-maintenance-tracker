@@ -1,0 +1,11 @@
+appId: dev.luisjrez.maintenancetracker
+name: Add a vehicle without a VIN
+env:
+  METRO_URL: http%3A%2F%2Flocalhost%3A8082
+---
+- runFlow: subflows/launch-fresh.yaml
+- runFlow: subflows/add-manual-vehicle.yaml
+- assertVisible: 2019 Toyota Camry
+- assertVisible: .*42,000 mi.*
+- assertVisible:
+    id: history-empty

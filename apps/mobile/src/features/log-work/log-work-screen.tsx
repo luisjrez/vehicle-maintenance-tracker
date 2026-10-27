@@ -91,7 +91,7 @@ export function LogWorkScreen({ vehicleId }: { vehicleId: string }) {
     // The ScrollView must be the sheet's direct child: react-native-screens' form
     // sheet lays out a nested one with no height and the content disappears.
     <>
-      <ScrollView style={styles.sheet} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
+      <ScrollView style={styles.sheet} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={styles.content}>
         <Text style={styles.stepLabel}>
           {`${recordId === null ? strings.logWork.title : strings.logWork.editTitle} · ${strings.logWork.stepOf(step)}`}
         </Text>

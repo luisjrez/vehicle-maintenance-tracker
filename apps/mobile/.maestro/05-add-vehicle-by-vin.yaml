@@ -1,0 +1,40 @@
+appId: dev.luisjrez.maintenancetracker
+name: Add a vehicle by VIN (calls NHTSA vPIC through the API)
+tags:
+  - network
+env:
+  METRO_URL: http%3A%2F%2Flocalhost%3A8082
+---
+- runFlow: subflows/launch-fresh.yaml
+- tapOn:
+    id: garage-empty-add
+- tapOn:
+    id: vin-input
+- inputText: 1HGCM82633A004352
+- runFlow: subflows/dismiss-keyboard.yaml
+- assertVisible:
+    id: vin-valid
+- tapOn:
+    id: vin-look-up
+- extendedWaitUntil:
+    visible:
+      id: add-vehicle-vin-card
+    timeout: 20000
+- assertVisible: 1HGCM82633A004352
+- scrollUntilVisible:
+    element:
+      id: vehicle-initial-odometer
+    direction: DOWN
+- tapOn:
+    id: vehicle-initial-odometer
+- inputText: "150000"
+- runFlow: subflows/dismiss-keyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: add-vehicle-save
+    direction: DOWN
+- tapOn:
+    id: add-vehicle-save
+- extendedWaitUntil:
+    visible: 2003 Honda Accord.*
+    timeout: 15000

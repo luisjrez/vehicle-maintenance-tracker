@@ -1,0 +1,35 @@
+# Logs an oil change plus a tire rotation at 45,500 mi for $89.99 at a chain shop.
+appId: dev.luisjrez.maintenancetracker
+---
+- tapOn:
+    id: garage-fab
+- tapOn:
+    id: action-log-work
+- tapOn:
+    id: common-service-oil-change
+- tapOn:
+    id: common-service-tire-rotation
+- tapOn:
+    id: log-work-next
+- tapOn:
+    id: log-work-odometer
+- inputText: "45500"
+- runFlow: dismiss-keyboard.yaml
+- tapOn:
+    id: log-work-provider-name
+- inputText: Jiffy Lube
+- runFlow: dismiss-keyboard.yaml
+- tapOn:
+    id: provider-type-chain
+- tapOn:
+    id: log-work-next
+- tapOn:
+    id: log-work-total
+- inputText: "89.99"
+- runFlow: dismiss-keyboard.yaml
+- tapOn:
+    id: log-work-save
+- extendedWaitUntil:
+    visible:
+      id: history-list
+    timeout: 15000

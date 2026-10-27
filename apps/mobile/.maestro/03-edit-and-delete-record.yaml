@@ -1,0 +1,45 @@
+appId: dev.luisjrez.maintenancetracker
+name: Edit a record's total, then delete it
+env:
+  METRO_URL: http%3A%2F%2Flocalhost%3A8082
+---
+- runFlow: subflows/launch-fresh.yaml
+- runFlow: subflows/add-manual-vehicle.yaml
+- runFlow: subflows/log-oil-change.yaml
+- scrollUntilVisible:
+    element:
+      id: history-row-.*
+    direction: DOWN
+- tapOn:
+    id: history-row-.*
+- assertVisible:
+    id: record-detail-total
+- tapOn:
+    id: record-edit
+- tapOn:
+    id: log-work-next
+- tapOn:
+    id: log-work-next
+- tapOn:
+    id: log-work-total
+- eraseText: 10
+- inputText: "120"
+- runFlow: subflows/dismiss-keyboard.yaml
+- tapOn:
+    id: log-work-save
+- extendedWaitUntil:
+    visible: .*\$120\.00.*
+    timeout: 15000
+# Saving an edit closes the wizard and the record sheet, back to the garage.
+- tapOn:
+    id: history-row-.*
+- tapOn:
+    id: record-delete
+# The screen's own button shares the label; the alert's sits right of Cancel.
+- tapOn:
+    text: Delete record
+    rightOf: Cancel
+- extendedWaitUntil:
+    visible:
+      id: history-empty
+    timeout: 15000

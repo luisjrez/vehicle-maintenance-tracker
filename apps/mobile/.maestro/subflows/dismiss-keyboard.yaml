@@ -1,0 +1,8 @@
+# Number pads have no return key and Maestro's hideKeyboard can't close them; the
+# forms dismiss the keyboard on drag, so a short drag over the form closes it.
+appId: dev.luisjrez.maintenancetracker
+---
+- swipe:
+    start: 50%, 30%
+    end: 50%, 40%
+    duration: 400

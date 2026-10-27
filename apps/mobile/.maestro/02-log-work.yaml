@@ -1,0 +1,15 @@
+appId: dev.luisjrez.maintenancetracker
+name: Log a service and see it in history and spending
+env:
+  METRO_URL: http%3A%2F%2Flocalhost%3A8082
+---
+- runFlow: subflows/launch-fresh.yaml
+- runFlow: subflows/add-manual-vehicle.yaml
+- runFlow: subflows/log-oil-change.yaml
+- assertVisible: .*45,500 mi.*
+- scrollUntilVisible:
+    element:
+      id: spending-total
+    direction: DOWN
+- assertVisible: .*\$89\.99.*
+- assertVisible: .*Oil & filter change, Tire rotation.*

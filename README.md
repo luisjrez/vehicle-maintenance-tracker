@@ -53,6 +53,21 @@ bun run test                  # jest-expo
 - Bun **isolated** installs work for the app. Two things were needed: `jest.config.js` adds Bun's `.bun` store to jest-expo's `transformIgnorePatterns`, and the root `overrides` pin `react`/`react-dom` to the SDK's 19.3.0 (Prisma Studio otherwise pulls a second React). `expo-doctor` still reports duplicate `expo`/`expo-constants` folders (peer-dependency variants of the same version); the Metro bundle contains a single copy of each, checked via the export source map. Switch `bunfig.toml` to `linker = "hoisted"` only if a native build breaks.
 - Every request carries `X-Device-Id` (`ANDROID_ID` on Android, a Keychain UUID on iOS). It is a credential: never log or display it.
 
+### End-to-end flows (Maestro)
+
+Flows live in `apps/mobile/.maestro/` and drive the dev build on an iOS simulator: add a vehicle by hand and by VIN, log a service, edit and delete a record, rename and delete a vehicle.
+
+```sh
+# API with a high new-Device limit: every flow starts as a new Owner (keychain cleared),
+# and the default limit is 10 new Owners per hour per IP.
+(cd apps/api && THROTTLE_NEW_OWNERS_LIMIT=100000 bun run start:dev)
+(cd apps/mobile && bun run start)                # Metro on 8082
+cd apps/mobile && maestro --device <simulator-udid> test .maestro
+```
+
+- The VIN flow (`network` tag) decodes through the API, which calls NHTSA vPIC unless the VIN is already cached; skip it offline with `--exclude-tags network`.
+- With its state cleared, the dev build opens the dev menu over the app; `subflows/launch-fresh.yaml` closes it. Number pads can't be closed with `hideKeyboard`, so `subflows/dismiss-keyboard.yaml` drags the form (forms dismiss the keyboard on drag).
+
 ### Scanner (VisionCamera 5.2.3 + ML Kit 2.0.1)
 
 - All camera code lives in `apps/mobile/src/features/scanner/scanner-camera.tsx`; Jest swaps it for `src/test/scanner-camera-mock.tsx`. Frame callbacks never throw (an exception there kills the app on iOS release builds).

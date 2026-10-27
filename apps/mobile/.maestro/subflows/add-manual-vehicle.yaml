@@ -1,0 +1,39 @@
+# Adds a 2019 Toyota Camry at 42,000 mi without a VIN, from the empty garage.
+# Dismiss the keyboard after every field: an open keyboard covers the fields below it, and
+# a tap there would land on the keyboard instead.
+appId: dev.luisjrez.maintenancetracker
+---
+- tapOn:
+    id: garage-empty-add
+- tapOn:
+    id: vin-skip
+- tapOn:
+    id: vehicle-year
+- inputText: "2019"
+- runFlow: dismiss-keyboard.yaml
+- tapOn:
+    id: vehicle-make
+- inputText: Toyota
+- runFlow: dismiss-keyboard.yaml
+- tapOn:
+    id: vehicle-model
+- inputText: Camry
+- runFlow: dismiss-keyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: vehicle-initial-odometer
+    direction: DOWN
+- tapOn:
+    id: vehicle-initial-odometer
+- inputText: "42000"
+- runFlow: dismiss-keyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: add-vehicle-save
+    direction: DOWN
+- tapOn:
+    id: add-vehicle-save
+- extendedWaitUntil:
+    visible:
+      id: vehicle-summary
+    timeout: 15000
