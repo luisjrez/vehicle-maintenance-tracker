@@ -25,6 +25,7 @@ describe('VehicleDetailsScreen', () => {
 
   it('shows every field, including decoded details and the VIN', async () => {
     await render(<VehicleDetailsScreen vehicleId="vehicle-1" />);
+    await fireEvent.press(screen.getByTestId('vehicle-more-details'));
 
     expect(screen.getByTestId('vehicle-vin')).toHaveDisplayValue('1HGCM82633A004352');
     expect(screen.getByTestId('vehicle-body-class')).toHaveDisplayValue('Coupe');
@@ -37,6 +38,7 @@ describe('VehicleDetailsScreen', () => {
     await render(<VehicleDetailsScreen vehicleId="vehicle-1" />);
 
     await fireEvent.changeText(screen.getByTestId('vehicle-nickname'), '');
+    await fireEvent.press(screen.getByTestId('vehicle-more-details'));
     await fireEvent.changeText(screen.getByTestId('vehicle-body-class'), 'Sedan');
     await fireEvent.press(screen.getByTestId('vehicle-details-save'));
 

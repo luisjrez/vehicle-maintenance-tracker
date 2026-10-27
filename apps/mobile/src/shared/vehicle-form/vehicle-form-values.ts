@@ -132,3 +132,38 @@ export function formValuesToUpdate(values: VehicleFormValues, vin: string | null
     color: blankToNull(input.color),
   };
 }
+
+/** The fields behind "More details": decoded specs and registration, rarely typed by hand. */
+export const MORE_DETAILS_FIELDS = [
+  'trim',
+  'bodyClass',
+  'vehicleType',
+  'fuelType',
+  'electrification',
+  'cylinders',
+  'displacementL',
+  'driveType',
+  'plate',
+  'plateState',
+  'color',
+] as const satisfies readonly VehicleFormField[];
+
+/** One line for the collapsed section, so decoded details stay visible without the long form. */
+export function moreDetailsSummary(values: VehicleFormValues): string {
+  const plate = [values.plate.trim(), values.plateState.trim().toUpperCase()].filter((part) => part !== '').join(' ');
+  return [
+    values.trim,
+    values.bodyClass,
+    values.vehicleType,
+    values.fuelType,
+    values.electrification,
+    values.cylinders.trim() === '' ? '' : `${values.cylinders.trim()} cyl`,
+    values.displacementL.trim() === '' ? '' : `${values.displacementL.trim()} L`,
+    values.driveType,
+    plate,
+    values.color,
+  ]
+    .map((part) => part.trim())
+    .filter((part) => part !== '')
+    .join(' · ');
+}

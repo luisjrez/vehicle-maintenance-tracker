@@ -117,6 +117,8 @@ describe('AddVehicleScreen', () => {
 
     expect(await screen.findByTestId('add-vehicle-notice')).toHaveTextContent(/review/i);
     expect(screen.getByTestId('vehicle-make')).toHaveDisplayValue('Honda');
+    expect(screen.getByTestId('vehicle-more-details-summary')).toHaveTextContent('EX-V6 · Coupe · Passenger Car · Gasoline · 6 cyl · 3 L');
+    await fireEvent.press(screen.getByTestId('vehicle-more-details'));
     expect(screen.getByTestId('vehicle-body-class')).toHaveDisplayValue('Coupe');
     expect(screen.getByTestId('vehicle-cylinders')).toHaveDisplayValue('6');
     await fireEvent.changeText(screen.getByTestId('vehicle-model'), 'Accord Coupe');
